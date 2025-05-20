@@ -2,12 +2,12 @@
 
 WIN_TITLE="Monitoramento"
 
-# Fecha se já estiver aberto
+Fecha se já estiver aberto
 PID=$(pgrep -f "kitty --class $WIN_TITLE")
 if [ -n "$PID" ]; then
   pkill -f "kitty --class $WIN_TITLE"
 else
-  kitty \
+    kitty \
     --class "$WIN_TITLE" \
     --title "$WIN_TITLE" \
     --detach \
