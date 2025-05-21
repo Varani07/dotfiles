@@ -1,3 +1,5 @@
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -132,6 +134,7 @@ alias fdc="pkill -f discord"
 alias cisco="QT_QPA_PLATFORM=xcb /usr/lib/packettracer/packettracer"
 alias rpi="sudo -E rpi-imager"
 alias usina="cd ~ && cd Documents/repos/gerenciamento_usina && docker-compose exec modo_interativo /bin/bash"
+alias panel="cd ~/Documents/repos/control-panel && condaon && conda activate control_panel_env && vim ."
 
 steamfps() {
   local fps=${1:-60}
