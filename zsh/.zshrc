@@ -116,25 +116,15 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 alias vim="nvim"
 alias ff="clear && fastfetch"
-alias ts="sudo -E timeshift-gtk"
 alias super_update="yay -Syu && flatpak update"
 alias pk="pokeget random"
-alias mf="flatpak run io.github.go_musicfox.go-musicfox"
-alias ani="ani-cli"
-alias nc="ncspot"
-alias lg="lazygit"
 alias nt="nitch"
 alias of="onefetch"
 alias band="sudo bandwhich"
-alias aqua="asciiquarium"
-alias nb="newsboat"
-alias docs="devdocs-desktop"
-alias st="speedtest"
-alias fdc="pkill -f discord"
 alias cisco="QT_QPA_PLATFORM=xcb /usr/lib/packettracer/packettracer"
-alias rpi="sudo -E rpi-imager"
 alias usina="cd ~ && cd Documents/repos/gerenciamento_usina && docker-compose exec modo_interativo /bin/bash"
-alias panel="cd ~/Documents/repos/control-panel && condaon && conda activate control_panel_env && vim ."
+alias panel="cd ~/Documentos/repos/control-panel && condaon && conda activate control_panel_env && vim ."
+alias vid="tree ~/Videos ~/Imagens/paint"
 
 steamfps() {
   local fps=${1:-60}
@@ -152,6 +142,24 @@ watchherofps() {
   local fps=${1:-60}
   DXVK_FRAME_RATE=$fps prime-run flatpak run --env=DXVK_HUD=1 com.heroicgameslauncher.hgl
 }
+newvideo() {
+    local name="$1"
+
+    mkdir ~/Imagens/paint/$name
+    mkdir ~/Videos/bruto/$name
+    mkdir ~/Videos/kdenlive/$name
+    mkdir ~/Videos/youtube/$name
+}
+
+delvideo() {
+    local name="$1"
+
+    rm -rf ~/Imagens/paint/$name
+    rm -rf ~/Videos/bruto/$name
+    rm -rf ~/Videos/kdenlive/$name
+    rm -rf ~/Videos/youtube/$name
+}
+
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -159,6 +167,3 @@ alias condaon='eval "$(/home/varani/anaconda3/bin/conda shell.zsh hook)" && cond
 alias sqlon='sudo mysql -u root -p'
 source $HOME/.cargo/env
 eval "$(thefuck --alias f)"
-
-# Created by `pipx` on 2025-05-08 23:09:37
-export PATH="$PATH:/home/varani/.local/bin"
