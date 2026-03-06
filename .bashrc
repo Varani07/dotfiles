@@ -206,3 +206,4 @@ _act_completion() {
 complete -F _act_completion act
 alias py='python'
 alias superdate='sudo apt update && sudo apt upgrade -y && flatpak update && snap refresh'
+alias vim='nvim'
