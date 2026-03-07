@@ -8,7 +8,11 @@ local servers = {
   "ts_ls",
   "rust_analyzer",
   "sqlls",
-  "jdtls"
+  "jdtls",
+  "bashls",
+  "dockerls",
+  "yamlls",
+  "marksman"
 }
 
 for _, server in ipairs(servers) do

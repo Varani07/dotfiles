@@ -153,18 +153,20 @@ act() {
   local OPTIND
 
   local vscode=false
+  local vim=false
   local name_env=""
   local iniciar=""
   local sem_env=false
   local caminho=true
 
-  while getopts "ce:s:np" opt; do
+  while getopts "ce:s:npv" opt; do
     case $opt in
       c) vscode=true ;;
       e) name_env="$OPTARG" ;;
       s) iniciar="$OPTARG" ;;
       n) sem_env=true ;;
       p) caminho=false ;;
+      v) vim=true ;;
     esac
   done
 
@@ -182,6 +184,10 @@ act() {
       conda activate "$name_env"
     elif [ "$sem_env" = false ]; then
       conda activate "$repo"
+    fi
+
+    if [ "$vim" = true ]; then
+        nvim "$path_completo"
     fi
     
     if [ "$vscode" = true ]; then
@@ -207,3 +213,8 @@ complete -F _act_completion act
 alias py='python'
 alias superdate='sudo apt update && sudo apt upgrade -y && flatpak update && snap refresh'
 alias vim='nvim'
+alias tk='tmux kill-server'
+alias check_health='ps -eo pid,ppid,cmd,rss,%mem,%cpu --sort=-rss | head -20'
+alias ns='flatpak run io.github.hrkfdn.ncspot'
+alias kollama='sudo pkill -f ollama'
+alias sollama='ollama run qwen2.5-coder:7b'
