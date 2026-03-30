@@ -1,0 +1,181 @@
+#!/bin/bash
+
+# Author: Varani07
+#
+# Description:
+# ...
+#
+# Usage:
+# act 
+
+act() {
+    local OPTIND
+    
+    local vscode=false
+    local vim=false
+    local entry_point=""
+    local iniciar=false
+
+    while getopts "cvw:qs" opt; do
+        case $opt in
+            c) vscode=true ;;
+            v) vim=true ;;
+            s) iniciar=true ;;
+            w) entry_point="$OPTARG" ;;
+            q)
+                cd $HOME && conda activate base
+                return
+                ;;
+        esac
+    done
+
+    shift $((OPTIND - 1))
+
+    local repo="$1"
+
+    if [ -z "$repo" ]; then
+        echo "Projeto não especifiado."
+        return
+    fi
+
+    local file="$HOME/.act_projects"
+    local path_completo=""
+    local linguagem=""
+    local ambiente=""
+
+    while read -r path; do
+        path_completo="${path%%:*}"
+        clean_path="${path//:/}"
+        if [[ ${path_completo##*/} = "$repo" ]]; then
+            if [ $(( ${#path} - ${#clean_path} )) -eq 1 ]; then
+                linguagem="${path##*:}"
+            else
+                local resto="${path#*:}"
+                linguagem="${resto%%:*}"
+                ambiente="${resto##*:}"
+            fi
+            break
+        fi
+    done < "$file"
+
+    if [ -d "$path_completo" ]; then
+        cd "$path_completo"
+
+        if [ "$vim" = true ]; then
+            nvim "$path_completo"
+        fi
+
+        if [ "$vscode" = true ]; then
+            code "$path_completo"
+        fi
+
+        case $linguagem in
+            python) 
+                if [[ -n "$ambiente" ]]; then
+                    conda activate "$ambiente"
+                fi
+                if [ "$iniciar" = true ]; then
+                    if [[ -n "$entry_point" ]]; then
+                        python "${entry_point}.py"
+                    else
+                        python main.py
+                    fi
+                fi
+                ;;
+        esac
+    else
+        echo "Repo não existe."
+    fi
+}
+
+actadd() {
+    local file="$HOME/.act_projects"
+    local path="$(pwd)"
+
+    touch "$file"
+
+    [[ -z "$1" ]] && echo "Função precisa de pelo menos um argumento." && return
+    local linguagem="$1"
+
+    while IFS= read -r line; do
+        project="${line%%:*}"
+        if [[ "$path" = "$project" ]]; then
+            echo "Projeto já registrado."
+            return
+        fi
+    done < "$file"
+
+    if [[ -n "$2" ]]; then
+        echo "${path}:${linguagem}:${2}" >> "$file"
+    else
+        echo "${path}:${linguagem}" >> "$file"
+    fi
+}
+
+actrm() {
+    local file="$HOME/.act_projects"
+    local cwd="$(pwd)"
+    [[ -f "$file" ]] || return
+    local temp=$(mktemp)
+
+    while read -r path; do
+        [[ "${path%%:*}" == "$cwd" ]] && continue
+        echo "$path" >> "$temp"
+    done < "$file"
+
+    mv "$temp" "$file"
+}
+
+actls() {
+    local file="$HOME/.act_projects"
+    [[ -f "$file" ]] || return
+    cat -n "$file"
+}
+
+_act_completion() {
+    local cur prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    COMPREPLY=( $(compgen -W "$(_get_projects)" -- "$cur") )
+}
+complete -F _act_completion act
+
+_actadd_completion() {
+    local cur prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [[ "$prev" == "actadd" ]]; then
+        COMPREPLY=( $(compgen -W "$(_get_linguagens)" -- "$cur") )
+    else
+        case "$prev" in
+            python) COMPREPLY=( $(compgen -W "$(_get_conda_envs)" -- "$cur") ) ;;
+        esac
+    fi
+}
+complete -F _actadd_completion actadd
+
+_get_conda_envs() {
+    local envs=()
+    while read -r name _; do
+        [[ $name == "#" || -z $name ]] && continue
+        envs+=("$name")
+    done < <(conda info --envs)
+    printf '%s\n' "${envs[@]}"
+}
+
+_get_linguagens() {
+    printf '%s\n' various python lua bash
+}
+
+_get_projects() {
+    local file="$HOME/.act_projects"
+    [[ -f "$file" ]] || return
+
+    while IFS= read -r line; do
+        [[ -z $line ]] && continue
+        local path="${line%%:*}"
+        printf '%s\n' "${path##*/}"
+    done < "$file"
+}

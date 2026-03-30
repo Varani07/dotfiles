@@ -131,90 +131,48 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
+if [ -d "$HOME/repos/dotfiles/scripts" ]; then
+    export PATH="$PATH:$HOME/repos/dotfiles/scripts"
+    for arquivo in $HOME/repos/dotfiles/scripts/*; do
+        chmod 744 $arquivo
+        source $arquivo
+    done
+fi
+
 alias back='cd ~/Documentos && rm -rf backup-suwayomi/backup-2/* && mv backup-suwayomi/backup-1/* backup-suwayomi/backup-2/ && rsync -avz --progress varanin@100.115.217.64:~/.local/share/Tachidesk/{database.mv.db,extensions,downloads,server.conf,settings,backups} backup-suwayomi/backup-1/'
+
 alias varanin='ssh varanin@100.115.217.64'
 alias caiti='ssh caiti@100.77.166.2'
-alias copy='wl-copy'
+
 alias bs='vim ~/.bashrc'
 alias sbs='source ~/.bashrc'
 alias cbs='cat -n ~/.bashrc'
+
+alias sqlon='mysql -u varani -p'
+
+alias superdate='sudo apt update && sudo apt upgrade -y && flatpak update && snap refresh'
+alias check_health='ps -eo pid,ppid,cmd,rss,%mem,%cpu --sort=-rss | head -20'
+
+alias py='python'
+alias vim='nvim'
+alias aria='aria2c -x 16 -s 16'
+alias scloud='rclone mount onedrive-pessoal: ~/onedrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon && rclone mount gdrive-pessoal: ~/gdrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon'
+alias ns='flatpak run io.github.hrkfdn.ncspot'
+alias cosp='RUST_LOG=off cosmic-player'
+alias copy='wl-copy'
+alias cls='clear'
+
+alias sollama='ollama run qwen2.5-coder:7b'
+alias kollama='sudo pkill -f ollama'
+
+alias tks='tmux kill-session'
+alias tk='tmux kill-server'
+alias ke='killall easyeffects'
+
 bsadd() {
     echo "$@" >> ~/.bashrc
 }
-alias sqlon='mysql -u varani -p'
-alias ke='killall easyeffects'
-alias aria='aria2c -x 16 -s 16'
-alias scloud='rclone mount onedrive-pessoal: ~/onedrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon && rclone mount gdrive-pessoal: ~/gdrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon'
-alias cosp='RUST_LOG=off cosmic-player'
+
 yt() {
     yt-dlp -f "bestvideo+bestaudio" "$@"
 }
-act() {
-  local OPTIND
-
-  local vscode=false
-  local vim=false
-  local name_env=""
-  local iniciar=""
-  local sem_env=false
-  local caminho=true
-
-  while getopts "ce:s:npv" opt; do
-    case $opt in
-      c) vscode=true ;;
-      e) name_env="$OPTARG" ;;
-      s) iniciar="$OPTARG" ;;
-      n) sem_env=true ;;
-      p) caminho=false ;;
-      v) vim=true ;;
-    esac
-  done
-
-  shift $((OPTIND - 1))
-
-  local repo="$1"
-  local path_completo="$HOME/repos/$repo"
-
-  if [ -d "$path_completo" ]; then
-    if [ "$caminho" = true ]; then
-      cd "$path_completo"
-    fi
-    
-    if [ -n "$name_env" ]; then
-      conda activate "$name_env"
-    elif [ "$sem_env" = false ]; then
-      conda activate "$repo"
-    fi
-
-    if [ "$vim" = true ]; then
-        nvim "$path_completo"
-    fi
-    
-    if [ "$vscode" = true ]; then
-      code "$path_completo"
-    fi
-    
-    if [ -n "$iniciar" ]; then
-      case $iniciar in
-        py) python main.py ;;
-      esac
-    fi
-  else
-    echo "Repo não existe."
-  fi
-}
-_act_completion() {
-  local cur
-  cur="${COMP_WORDS[COMP_CWORD]}"
-  COMPREPLY=( $(compgen -d -- "$HOME/repos/$cur") )
-  COMPREPLY=( $(basename -a "${COMPREPLY[@]}") )
-}
-complete -F _act_completion act
-alias py='python'
-alias superdate='sudo apt update && sudo apt upgrade -y && flatpak update && snap refresh'
-alias vim='nvim'
-alias tk='tmux kill-server'
-alias check_health='ps -eo pid,ppid,cmd,rss,%mem,%cpu --sort=-rss | head -20'
-alias ns='flatpak run io.github.hrkfdn.ncspot'
-alias kollama='sudo pkill -f ollama'
-alias sollama='ollama run qwen2.5-coder:7b'
