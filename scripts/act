@@ -6,7 +6,15 @@
 # ...
 #
 # Usage:
-# act 
+# actadd <programming-language>
+# actadd <programming-language> <environment>
+# actrm
+# actls
+# act <project>
+# act -v <project>
+# act -c <project>
+# act -s <project>
+# act -w <start-point> <project>
 
 act() {
     local OPTIND
@@ -16,16 +24,12 @@ act() {
     local entry_point=""
     local iniciar=false
 
-    while getopts "cvw:qs" opt; do
+    while getopts "cvw:s" opt; do
         case $opt in
             c) vscode=true ;;
             v) vim=true ;;
             s) iniciar=true ;;
             w) entry_point="$OPTARG" ;;
-            q)
-                cd $HOME && conda activate base
-                return
-                ;;
         esac
     done
 
@@ -35,6 +39,7 @@ act() {
 
     if [ -z "$repo" ]; then
         echo "Projeto não especifiado."
+        cd $HOME && conda activate base
         return
     fi
 
