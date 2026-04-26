@@ -10,26 +10,23 @@
 # actadd <programming-language> <environment>
 # actrm
 # actls
+# act
 # act <project>
-# act -v <project>
-# act -c <project>
-# act -s <project>
+# act -e <editor> <project>
 # act -w <start-point> <project>
 
 act() {
     local OPTIND
-    
-    local vscode=false
-    local vim=false
+
     local entry_point=""
     local iniciar=false
+    local editor="" 
 
-    while getopts "cvw:s" opt; do
+    while getopts "w:se:" opt; do
         case $opt in
-            c) vscode=true ;;
-            v) vim=true ;;
             s) iniciar=true ;;
             w) entry_point="$OPTARG" ;;
+            e) editor="$OPTARG" ;;
         esac
     done
 
@@ -38,7 +35,6 @@ act() {
     local repo="$1"
 
     if [ -z "$repo" ]; then
-        echo "Projeto não especifiado."
         cd $HOME && conda activate base
         return
     fi
@@ -66,14 +62,6 @@ act() {
     if [ -d "$path_completo" ]; then
         cd "$path_completo"
 
-        if [ "$vim" = true ]; then
-            nvim "$path_completo"
-        fi
-
-        if [ "$vscode" = true ]; then
-            code "$path_completo"
-        fi
-
         case $linguagem in
             python) 
                 if [[ -n "$ambiente" ]]; then
@@ -87,7 +75,20 @@ act() {
                     fi
                 fi
                 ;;
+            c-sharp)
+                if [ "$iniciar" = true ]; then
+                    dotnet run
+                fi
+                ;;
         esac
+
+        if [[ -n "$editor" ]]; then
+            case $editor in
+                vsc) code "$path_completo" ;;
+                antigravity) antigravity "$path_completo" ;;
+                vim) nvim "$path_completo" ;;
+            esac
+        fi
     else
         echo "Repo não existe."
     fi
@@ -142,7 +143,10 @@ _act_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    COMPREPLY=( $(compgen -W "$(_get_projects)" -- "$cur") )
+    case "$prev" in
+        -*e*) COMPREPLY=( $(compgen -W "$(_get_ide)" -- "$cur") ) ;;
+        *) COMPREPLY=( $(compgen -W "$(_get_projects)" -- "$cur") ) ;;
+    esac
 }
 complete -F _act_completion act
 
@@ -171,7 +175,11 @@ _get_conda_envs() {
 }
 
 _get_linguagens() {
-    printf '%s\n' various python lua bash
+    printf '%s\n' various python lua bash c-sharp
+}
+
+_get_ide() {
+    printf '%s\n' vsc antigravity vim
 }
 
 _get_projects() {

@@ -8,8 +8,7 @@ return require('packer').startup(function(use)
   use 'wbthomason/packer.nvim'
 
   use {
-	  'nvim-telescope/telescope.nvim', tag = '0.1.8',
-	  -- or                            , branch = '0.1.x',
+	  'nvim-telescope/telescope.nvim',
 	  requires = { {'nvim-lua/plenary.nvim'} }
   }
 
@@ -39,14 +38,4 @@ return require('packer').startup(function(use)
   }
   use {"voldikss/vim-floaterm"}
   use 'nvim-tree/nvim-web-devicons'
-  -- DAP e debug Python
-  use {
-      "mfussenegger/nvim-dap",
-      requires = {
-          "rcarriga/nvim-dap-ui",
-          "mfussenegger/nvim-dap-python",
-          "theHamsta/nvim-dap-virtual-text",
-          "nvim-neotest/nvim-nio"
-      }
-  }
 end)

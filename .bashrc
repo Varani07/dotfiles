@@ -150,7 +150,7 @@ alias cbs='cat -n ~/.bashrc'
 
 alias sqlon='mysql -u varani -p'
 
-alias superdate='sudo apt update && sudo apt upgrade -y && flatpak update && snap refresh'
+alias superdate='sudo apt update && sudo apt upgrade -y && flatpak update && sudo snap refresh'
 alias check_health='ps -eo pid,ppid,cmd,rss,%mem,%cpu --sort=-rss | head -20'
 
 alias py='python'
@@ -176,3 +176,4 @@ bsadd() {
 yt() {
     yt-dlp -f "bestvideo+bestaudio" "$@"
 }
+export PATH="$HOME/.local/bin:$PATH"
