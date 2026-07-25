@@ -80,11 +80,21 @@ act() {
                     dotnet run
                 fi
                 ;;
+            go)
+                if [ "$iniciar" = true ]; then
+                    go run .
+                fi
+                ;;
+            odin)
+                if [ "$iniciar" = true ]; then
+                    odin run .
+                fi
+                ;;
         esac
 
         if [[ -n "$editor" ]]; then
             case $editor in
-                vsc) code "$path_completo" ;;
+                code) code "$path_completo" ;;
                 antigravity) antigravity "$path_completo" ;;
                 vim) nvim "$path_completo" ;;
             esac
@@ -175,11 +185,11 @@ _get_conda_envs() {
 }
 
 _get_linguagens() {
-    printf '%s\n' various python lua bash c-sharp
+    printf '%s\n' various python lua bash c-sharp go odin
 }
 
 _get_ide() {
-    printf '%s\n' vsc antigravity vim
+    printf '%s\n' code antigravity vim
 }
 
 _get_projects() {

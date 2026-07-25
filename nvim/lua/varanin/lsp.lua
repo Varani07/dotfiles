@@ -12,7 +12,8 @@ local servers = {
   "bashls",
   "dockerls",
   "yamlls",
-  "marksman"
+  "marksman",
+  "ols"
 }
 
 for _, server in ipairs(servers) do

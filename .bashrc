@@ -139,7 +139,7 @@ if [ -d "$HOME/repos/dotfiles/scripts" ]; then
     done
 fi
 
-alias back='cd ~/Documentos && rm -rf backup-suwayomi/backup-2/* && mv backup-suwayomi/backup-1/* backup-suwayomi/backup-2/ && rsync -avz --progress varanin@100.115.217.64:~/.local/share/Tachidesk/{database.mv.db,extensions,downloads,server.conf,settings,backups} backup-suwayomi/backup-1/'
+alias suwa='cd ~/suwayomi && java -jar Suwayomi-Server*.jar --server.ip=0.0.0.0 > suwayomi.log 2>&1 &'
 
 alias varanin='ssh varanin@100.115.217.64'
 alias caiti='ssh caiti@100.77.166.2'
@@ -177,3 +177,5 @@ yt() {
     yt-dlp -f "bestvideo+bestaudio" "$@"
 }
 export PATH="$HOME/.local/bin:$PATH"
+export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:/usr/local/odin
