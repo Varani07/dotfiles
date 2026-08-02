@@ -139,36 +139,6 @@ if [ -d "$HOME/repos/dotfiles/scripts" ]; then
     done
 fi
 
-alias suwa='cd ~/suwayomi && java -jar Suwayomi-Server*.jar --server.ip=0.0.0.0 > suwayomi.log 2>&1 &'
-
-alias varanin='ssh varanin@100.115.217.64'
-alias caiti='ssh caiti@100.77.166.2'
-
-alias bs='vim ~/.bashrc'
-alias sbs='source ~/.bashrc'
-alias cbs='cat -n ~/.bashrc'
-
-alias sqlon='mysql -u varani -p'
-
-alias superdate='sudo apt update && sudo apt upgrade -y && flatpak update && sudo snap refresh'
-alias check_health='ps -eo pid,ppid,cmd,rss,%mem,%cpu --sort=-rss | head -20'
-
-alias py='python'
-alias vim='nvim'
-alias aria='aria2c -x 16 -s 16'
-alias scloud='rclone mount onedrive-pessoal: ~/onedrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon && rclone mount gdrive-pessoal: ~/gdrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon'
-alias ns='flatpak run io.github.hrkfdn.ncspot'
-alias cosp='RUST_LOG=off cosmic-player'
-alias copy='wl-copy'
-alias cls='clear'
-
-alias sollama='ollama run qwen2.5-coder:7b'
-alias kollama='sudo pkill -f ollama'
-
-alias tks='tmux kill-session'
-alias tk='tmux kill-server'
-alias ke='killall easyeffects'
-
 bsadd() {
     echo "$@" >> ~/.bashrc
 }
@@ -179,3 +149,30 @@ yt() {
 export PATH="$HOME/.local/bin:$PATH"
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:/usr/local/odin
+
+osc52-copy() {
+    local text
+    if [ $# -gt 0 ]; then
+        text="$*"
+    else
+        text="$(cat)"
+    fi
+    local encoded
+    encoded=$(echo -n "$text" | base64 | tr -d '\n')
+    echo -ne "\033]52;c;${encoded}\007" 
+}
+
+if [ -n "$SSH_TTY" ]; then
+    alias copy='osc52-copy'
+else
+    alias copy='wl-copy'
+fi
+
+case $- in
+    *i*)
+        if ! pgrep -x sunshine >/dev/null; then
+            nohup sunshine >/dev/null 2>&1 &
+            touch $HOME/prova.txt
+        fi
+        ;;
+esac
