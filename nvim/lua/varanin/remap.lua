@@ -29,7 +29,3 @@ vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float)
 
 vim.keymap.set("n", "<leader>c", "o<BS>}<C-c>O")
-
-vim.keymap.set("i", "<C-f>", "()<C-c>i")
-vim.keymap.set("i", "<C-d>", "[]<C-c>i")
-vim.keymap.set("i", "<C-s>", "{}<C-c>i")
