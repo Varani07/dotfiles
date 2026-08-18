@@ -18,20 +18,22 @@ while getopts "l:dia" opt; do
 	esac
 done
 
-if [ "$deletar"=true ]; then
+if [ "$deletar" = true ]; then
 	rm -rf ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
 	rm -rf ~/.local/share/nvim/lazy
 	rm -rf ~/apps/nvim
 fi
 
-if [ "$install"=true ]; then
+if [ "$install" = true ]; then
     mkdir -p ~/apps/nvim && cd ~/apps/nvim
     aria2c -x 16 -s 16 "$url"
     chmod +x nvim*.appimage
-    if [ "$alpine" = false ]; then
-        sudo ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
+    if [ "$alpine" = true ]; then
+        ./nvim*.appimage --appimage-extract
+        rm -f nvim*.appimage
+        ln -sf ~/apps/nvim/squashfs-root/AppRun /usr/bin/nvim
     else
-        ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
+        sudo ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
     fi
 fi
 
