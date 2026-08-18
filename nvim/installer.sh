@@ -1,22 +1,26 @@
 #!/bin/bash
 
-if [[ "$(uname -m)" = "x86_64" ]]; then
-    url="https://github.com/neovim/neovim/releases/download/v0.11.6/nvim-linux-x86_64.appimage"
-else
-    url="https://github.com/neovim/neovim/releases/download/v0.11.6/nvim-linux-arm64.appimage"
-fi
 deletar=false
 install=false
 alpine=false
 
-while getopts "l:dia" opt; do
+while getopts "dia" opt; do
 	case $opt in
-		l) url="$OPTARG" ;;
 		d) deletar=true ;;
         i) install=true ;;
         a) alpine=true ;;
 	esac
 done
+
+if [ "$alpine" = true ]; then
+    url=""
+else
+    if [[ "$(uname -m)" = "x86_64" ]]; then
+        url="https://github.com/neovim/neovim/releases/download/v0.11.6/nvim-linux-x86_64.appimage"
+    else
+        url="https://github.com/neovim/neovim/releases/download/v0.11.6/nvim-linux-arm64.appimage"
+    fi
+fi
 
 if [ "$deletar" = true ]; then
 	rm -rf ~/.local/share/nvim ~/.local/state/nvim ~/.cache/nvim
@@ -29,9 +33,8 @@ if [ "$install" = true ]; then
     aria2c -x 16 -s 16 "$url"
     chmod +x nvim*.appimage
     if [ "$alpine" = true ]; then
-        ./nvim*.appimage --appimage-extract
-        rm -f nvim*.appimage
-        ln -sf ~/apps/nvim/squashfs-root/AppRun /usr/bin/nvim
+        tar -xzf nvim*.tar.gz
+        ln -sf ~/apps/nvim/nvim-linux-x86_64/bin/nvim /usr/bin/nvim
     else
         sudo ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
     fi
