@@ -25,6 +25,17 @@ return {
 
   {
     "williamboman/mason.nvim",
+    enabled = function()
+        local f = io.open("/etc/os-release", "r")
+        if f then
+            local content = f:read("*all")
+            f:close()
+            if content:match("ID=alpine") then
+                return false
+            end
+        end
+        return true
+    end,
     build = ":MasonUpdate",
     config = function()
       require("mason").setup()
@@ -32,6 +43,17 @@ return {
   },
   {
     "williamboman/mason-lspconfig.nvim",
+    enabled = function()
+        local f = io.open("/etc/os-release", "r")
+        if f then
+            local content = f:read("*all")
+            f:close()
+            if content:match("ID=alpine") then
+                return false
+            end
+        end
+        return true
+    end,
     dependencies = { "williamboman/mason.nvim", "neovim/nvim-lspconfig" },
     config = function()
       require("mason-lspconfig").setup()
