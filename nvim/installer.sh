@@ -28,7 +28,7 @@ if [ "$install"=true ]; then
     mkdir -p ~/apps/nvim && cd ~/apps/nvim
     aria2c -x 16 -s 16 "$url"
     chmod +x nvim*.appimage
-    if [ "$alpine" = true ]; then
+    if [ "$alpine" = false ]; then
         sudo ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
     else
         ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
