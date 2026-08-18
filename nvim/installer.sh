@@ -13,7 +13,7 @@ while getopts "dia" opt; do
 done
 
 if [ "$alpine" = true ]; then
-    url=""
+    url="https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.tar.gz"
 else
     if [[ "$(uname -m)" = "x86_64" ]]; then
         url="https://github.com/neovim/neovim/releases/download/v0.11.6/nvim-linux-x86_64.appimage"
@@ -31,11 +31,11 @@ fi
 if [ "$install" = true ]; then
     mkdir -p ~/apps/nvim && cd ~/apps/nvim
     aria2c -x 16 -s 16 "$url"
-    chmod +x nvim*.appimage
     if [ "$alpine" = true ]; then
         tar -xzf nvim*.tar.gz
         ln -sf ~/apps/nvim/nvim-linux-x86_64/bin/nvim /usr/bin/nvim
     else
+        chmod +x nvim*.appimage
         sudo ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
     fi
 fi
