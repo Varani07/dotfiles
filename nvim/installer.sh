@@ -7,12 +7,14 @@ else
 fi
 deletar=false
 install=false
+alpine=false
 
-while getopts "l:di" opt; do
+while getopts "l:dia" opt; do
 	case $opt in
 		l) url="$OPTARG" ;;
 		d) deletar=true ;;
         i) install=true ;;
+        a) alpine=true ;;
 	esac
 done
 
@@ -26,7 +28,11 @@ if [ "$install"=true ]; then
     mkdir -p ~/apps/nvim && cd ~/apps/nvim
     aria2c -x 16 -s 16 "$url"
     chmod +x nvim*.appimage
-    sudo ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
+    if ["$alpine" = true]; then
+        sudo ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
+    else
+        ln -sf ~/apps/nvim/nvim*.appimage /usr/bin/nvim
+    fi
 fi
 
 rm -rf ~/.config/nvim
