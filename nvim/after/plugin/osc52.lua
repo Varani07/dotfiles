@@ -6,8 +6,8 @@ if os.getenv("SSH_TTY") then
             ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
         },
         paste = {
-            ["+"] = function() retrn { {}, "" } end,
-            ["*"] = function() retrn { {}, "" } end,
+            ["+"] = function() return { {}, "" } end,
+            ["*"] = function() return { {}, "" } end,
         },
     }
 end
