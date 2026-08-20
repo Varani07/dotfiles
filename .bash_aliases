@@ -13,6 +13,8 @@ alias fast_build='./build.bash && cd kzr/ && sudo ./install.bash && cd ..'
 alias k='act -e vim kazer'
 alias ks='act -s kazer'
 
+alias alpine='proot --link2symlink -0 -r ~/alpine-old/rootfs -b /dev/ -b /sys/ -b /proc/ -b ~/.ssh:/root/.ssh -w /root /usr/bin/env -i HOME=/root PATH=/bin:/usr/bin:/sbin:/usr/sbin TERM="$TERM" /bin/sh'
+
 export PATH="$HOME/.local/bin:$PATH"
 
 if [ -d "$HOME/repos/dotfiles/scripts" ]; then
