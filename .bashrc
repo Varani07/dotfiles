@@ -94,3 +94,7 @@ if [ -x "$HOME/miniconda3/bin/conda" ]; then
     fi
     unset __conda_setup
 fi
+
+if [ -d "/usr/local/bin" ]; then
+    export PATH="/usr/local/bin:$PATH"
+fi
