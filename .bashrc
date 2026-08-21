@@ -98,3 +98,7 @@ fi
 if [ -d "/usr/local/bin" ]; then
     export PATH="/usr/local/bin:$PATH"
 fi
+
+if [ -S /var/run/docker.sock ] && [ ! -w /var/run/docker.sock ]; then
+    sudo chmod 666 /var/run/docker.sock 2>/dev/null
+fi
