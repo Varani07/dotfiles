@@ -10,8 +10,11 @@ alias aria='aria2c -x 16 -s 16'
 alias cls='clear'
 
 alias fast_build='./build.bash && cd kzr/ && sudo ./install.bash && cd ..'
-alias k='act -e vim kazer'
-alias ks='act -s kazer'
+
+alias steam='prime-run steam'
+
+alias ga='git add .'
+alias gst='git status'
 
 # alias alpine='unset LD_PRELOAD && proot --link2symlink -0 -r ~/alpine-old/rootfs -b /dev/ -b /sys/ -b /proc/ -w /root /usr/bin/env -i HOME=/root PATH=/bin:/usr/bin:/sbin:/usr/sbin TERM="$TERM" /bin/sh'
 # alias tmx_recover='export LD_PRELOAD=/data/data/com.termux/files/usr/lib/libtermux-exec.so'
