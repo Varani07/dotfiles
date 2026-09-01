@@ -27,7 +27,7 @@ fi
 export PATH
 
 case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
+    xterm-color|*-256color|xterm-kitty) color_prompt=yes;;
 esac
 
 if [ -n "$force_color_prompt" ]; then
