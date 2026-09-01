@@ -17,11 +17,13 @@ return {
         build = ":TSUpdate",
     },
 
-    "ThePrimeagen/harpoon",
     "mbbill/undotree",
+    "archibate/lualine-time",
+    "numToStr/Comment.nvim",
     "tpope/vim-fugitive",
     "voldikss/vim-floaterm",
     "nvim-tree/nvim-web-devicons",
+    "neovim/nvim-lspconfig",
 
     {
         "williamboman/mason.nvim",
@@ -59,7 +61,6 @@ return {
             require("mason-lspconfig").setup()
         end,
     },
-    "neovim/nvim-lspconfig",
 
     {
         "hrsh7th/nvim-cmp",
@@ -79,6 +80,20 @@ return {
         opts = {},
         keys = {
             { "zk", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+        },
+    },
+    {
+        "ThePrimeagen/harpoon",
+        branch = "harpoon2",
+        dependencies = { "nvim-lua/plenary.nvim" }
+    },
+    {
+        "letieu/harpoon-lualine",
+        dependencies = {
+            {
+                "ThePrimeagen/harpoon",
+                branch = "harpoon2",
+            }
         },
     },
 }
