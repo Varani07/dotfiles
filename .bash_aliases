@@ -5,6 +5,7 @@ alias cbs='cat -n ~/.bash_aliases'
 alias check_health='ps -eo pid,ppid,cmd,rss,%mem,%cpu --sort=-rss | head -20'
 
 alias py='python'
+alias py3='python3'
 alias vim='nvim'
 alias aria='aria2c -x 16 -s 16'
 alias cls='clear'
