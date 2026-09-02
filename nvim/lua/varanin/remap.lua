@@ -29,3 +29,6 @@ vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float)
 
 vim.keymap.set("n", "<leader>c", "o<BS>}<C-c>O")
+
+vim.keymap.set("n", "<leader>tn", ":tabnew<CR>")
+vim.keymap.set("n", "<leader>tc", ":tabclose<CR>")

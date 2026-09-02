@@ -15,18 +15,20 @@
 # act -e <editor> <project>
 # act -w <start-point> <project>
 
+MINICONDA_PATH="$HOME/miniconda3"
+
 act() {
     local OPTIND
 
     local entry_point=""
     local iniciar=false
-    local editor="" 
+    local vim=false 
 
-    while getopts "w:se:" opt; do
+    while getopts "w:sv" opt; do
         case $opt in
             s) iniciar=true ;;
             w) entry_point="$OPTARG" ;;
-            e) editor="$OPTARG" ;;
+            v) vim=true ;;
         esac
     done
 
@@ -35,7 +37,10 @@ act() {
     local repo="$1"
 
     if [ -z "$repo" ]; then
-        cd $HOME && conda activate base
+        cd $HOME
+        if [ -d "$MINICONDA_PATH" ]; then
+            conda activate base
+        fi
         return
     fi
 
@@ -92,12 +97,8 @@ act() {
                 ;;
         esac
 
-        if [[ -n "$editor" ]]; then
-            case $editor in
-                code) code "$path_completo" ;;
-                antigravity) antigravity "$path_completo" ;;
-                vim) nvim "$path_completo" ;;
-            esac
+        if [ "$vim" = true ]; then
+            nvim "$path_completo"
         fi
     else
         echo "Repo não existe."
@@ -169,7 +170,11 @@ _actadd_completion() {
         COMPREPLY=( $(compgen -W "$(_get_linguagens)" -- "$cur") )
     else
         case "$prev" in
-            python) COMPREPLY=( $(compgen -W "$(_get_conda_envs)" -- "$cur") ) ;;
+            python) 
+                if [ -d "$MINICONDA_PATH" ]; then
+                    COMPREPLY=( $(compgen -W "$(_get_conda_envs)" -- "$cur") ) 
+                fi
+                ;;
         esac
     fi
 }
