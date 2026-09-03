@@ -25,6 +25,38 @@ return {
     "nvim-tree/nvim-web-devicons",
     "neovim/nvim-lspconfig",
     {
+        "lukas-reineke/indent-blankline.nvim",
+        main = "ibl",
+        ---@module "ibl"
+        ---@type ibl.config
+        opts = {},
+    },
+    {
+        "echasnovski/mini.surround",
+        version = false,
+        event = "VeryLazy",
+        opts = {},
+    },
+    { 'nvim-mini/mini.nvim', version = false },
+    {
+        "folke/persistence.nvim",
+        event = "BufReadPre", -- this will only start session saving when an actual file was opened
+        opts = {
+            -- add any custom options here
+        }
+    },
+    {
+        'stevearc/oil.nvim',
+        ---@module 'oil'
+        ---@type oil.SetupOpts
+        opts = {},
+        -- Optional dependencies
+        dependencies = { { "nvim-mini/mini.icons", opts = {} } },
+        -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if you prefer nvim-web-devicons
+        -- Lazy loading is not recommended because it is very tricky to make it work correctly in all situations.
+        lazy = false,
+    },
+    {
         {
             "windwp/nvim-ts-autotag",
             dependencies = {
