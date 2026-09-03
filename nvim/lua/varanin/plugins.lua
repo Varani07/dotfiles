@@ -119,7 +119,7 @@ return {
         ---@type Flash.Config
         opts = {},
         keys = {
-            { "zk", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+            { "<leader>h", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
         },
     },
     {
