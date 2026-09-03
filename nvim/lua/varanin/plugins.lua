@@ -24,7 +24,15 @@ return {
     "voldikss/vim-floaterm",
     "nvim-tree/nvim-web-devicons",
     "neovim/nvim-lspconfig",
-
+    {
+        {
+            "windwp/nvim-ts-autotag",
+            dependencies = {
+                "nvim-treesitter/nvim-treesitter",
+            },
+            opts = {},
+        },
+    },
     {
         "williamboman/mason.nvim",
         enabled = function()
