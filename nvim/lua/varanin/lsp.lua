@@ -14,6 +14,8 @@ local servers = {
     dockerls       = "docker-langserver",
     yamlls         = "yaml-language-server",
     marksman       = "marksman",
+    html = "vscode-html-language-server",
+    cssls = "vscode-css-language-server",
 }
 
 for name, bin in pairs(servers) do
