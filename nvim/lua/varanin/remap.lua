@@ -1,4 +1,16 @@
+local run = require("scripts.run")
+
 vim.g.mapleader = " "
+
+vim.keymap.set("n", "<leader>c", "o<BS>}<C-c>O")
+vim.keymap.set("n", "<leader>k", ":Act ")
+vim.keymap.set("n", "<leader>r", run.run_file,
+    {
+        desc = "Run current file",
+    }
+)
+vim.keymap.set("n", "<leader>l", ":Lazy<CR>")
+
 vim.keymap.set("n", "<leader>ss", "<cmd>Oil<CR>")
 vim.keymap.set("n", "<leader>w", vim.cmd.w)
 vim.keymap.set("n", "qq", vim.cmd.q)
@@ -33,8 +45,6 @@ vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 
 vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float)
 
-vim.keymap.set("n", "<leader>c", "o<BS>}<C-c>O")
-
 vim.keymap.set("n", "<leader>tn", ":tabnew<CR>")
 -- vim.keymap.set("n", "<leader>tc", ":tabclose<CR>")
 
@@ -57,9 +67,6 @@ vim.keymap.set("n", "<leader>3", "3gt")
 vim.keymap.set("n", "<leader>4", "4gt")
 vim.keymap.set("n", "<leader>5", "5gt")
 vim.keymap.set("n", "<leader>6", "6gt")
-
-
-vim.keymap.set("n", "<leader>k", ":Act ")
 
 vim.keymap.set("n", "<leader>nn", "<C-w>w")
 vim.keymap.set("n", "<leader>nh", "<C-w><Left>")

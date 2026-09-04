@@ -12,8 +12,8 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("varanin.set")
-require("varanin.remap")
 require("scripts.act")
+require("varanin.remap")
 
 require("lazy").setup({
   spec = {
