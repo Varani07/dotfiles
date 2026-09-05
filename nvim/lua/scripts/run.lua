@@ -17,7 +17,7 @@ function M.run_file()
         return
     end
 
-    vim.cmd("FloatermNew " .. command .. " " .. vim.fn.shellscape(file))
+    vim.cmd("FloatermNew --autoclose=never " .. command .. " " .. vim.fn.shellescape(file))
 end
 
 return M
