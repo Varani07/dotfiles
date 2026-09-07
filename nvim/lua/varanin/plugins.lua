@@ -25,6 +25,21 @@ return {
     "nvim-tree/nvim-web-devicons",
     "neovim/nvim-lspconfig",
     {
+        "sotte/presenting.nvim",
+  opts = {
+    -- fill in your options here
+    -- see :help Presenting.config
+  },
+  cmd = { "Presenting" },
+    },
+    {
+        'MeanderingProgrammer/render-markdown.nvim',
+        dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-mini/mini.nvim' },
+        ---@module 'render-markdown'
+        ---@type render.md.UserConfig
+        opts = {},
+    },
+    {
         "lukas-reineke/indent-blankline.nvim",
         main = "ibl",
     },
