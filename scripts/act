@@ -190,7 +190,7 @@ _get_conda_envs() {
 }
 
 _get_linguagens() {
-    printf '%s\n' various python lua bash c-sharp go odin
+    printf '%s\n' various python lua bash c-sharp go odin md
 }
 
 _get_ide() {
