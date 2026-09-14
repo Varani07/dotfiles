@@ -6,6 +6,8 @@ alias check_health='ps -eo pid,ppid,cmd,rss,%mem,%cpu --sort=-rss | head -20'
 
 alias py='python'
 alias py3='python3'
+alias wup='python -m http.server 8000'
+alias wup3='python3 -m http.server 8000'
 alias vim='nvim'
 alias aria='aria2c -x 16 -s 16'
 alias cls='clear'
