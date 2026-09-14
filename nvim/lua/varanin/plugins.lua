@@ -24,6 +24,7 @@ return {
     "voldikss/vim-floaterm",
     "nvim-tree/nvim-web-devicons",
     "neovim/nvim-lspconfig",
+    {'akinsho/toggleterm.nvim', version = "*", config = true},
     {
         "sotte/presenting.nvim",
   opts = {

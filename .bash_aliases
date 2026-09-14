@@ -14,6 +14,11 @@ alias fast_build='./build.bash && cd kzr/ && sudo ./install.bash && cd ..'
 
 alias steam='prime-run steam'
 
+alias tarc='tar -czvf'
+alias tarx='tar -xzvf'
+alias rmr='rm -rf'
+alias lh='ls -lah'
+
 # alias alpine='unset LD_PRELOAD && proot --link2symlink -0 -r ~/alpine-old/rootfs -b /dev/ -b /sys/ -b /proc/ -w /root /usr/bin/env -i HOME=/root PATH=/bin:/usr/bin:/sbin:/usr/sbin TERM="$TERM" /bin/sh'
 # alias tmx_recover='export LD_PRELOAD=/data/data/com.termux/files/usr/lib/libtermux-exec.so'
 
@@ -55,7 +60,7 @@ if [[ "$(uname -m)" = "x86_64" ]]; then
     export PATH=$PATH:/usr/local/odin
     alias superdate='sudo apt update && sudo apt upgrade -y && flatpak update && sudo snap refresh'
     alias suwa='cd ~/suwayomi && java -jar Suwayomi-Server*.jar --server.ip=0.0.0.0 > suwayomi.log 2>&1 &'
-    alias scloud='rclone mount onedrive-pessoal: ~/onedrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon && rclone mount gdrive-pessoal: ~/gdrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon'
+    alias scloud='rclone mount onedrive-personal: ~/onedrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon && rclone mount gdrive-personal: ~/gdrive --vfs-cache-mode writes --vfs-cache-max-age 24h --vfs-read-chunk-size 128M --daemon'
     # alias ns='flatpak run io.github.hrkfdn.ncspot'
     # alias cosp='RUST_LOG=off cosmic-player'
     yt() {

@@ -20,15 +20,15 @@ MINICONDA_PATH="$HOME/miniconda3"
 act() {
     local OPTIND
 
-    local entry_point=""
     local iniciar=false
-    local vim=false 
+    local vim=false
+    local git_status=false
 
-    while getopts "w:sv" opt; do
+    while getopts "svg" opt; do
         case $opt in
             s) iniciar=true ;;
-            w) entry_point="$OPTARG" ;;
             v) vim=true ;;
+            g) git_status=true ;;
         esac
     done
 
@@ -45,14 +45,15 @@ act() {
     fi
 
     local file="$HOME/.act_projects"
-    local path_completo=""
+    local current_line_repo=""
     local linguagem=""
     local ambiente=""
+    local found_repo=false
 
     while read -r path; do
-        path_completo="${path%%:*}"
+        current_line_repo="${path%%:*}"
         clean_path="${path//:/}"
-        if [[ ${path_completo##*/} = "$repo" ]]; then
+        if [[ ${current_line_repo##*/} == "$repo" ]]; then
             if [ $(( ${#path} - ${#clean_path} )) -eq 1 ]; then
                 linguagem="${path##*:}"
             else
@@ -60,12 +61,17 @@ act() {
                 linguagem="${resto%%:*}"
                 ambiente="${resto##*:}"
             fi
+            found_repo=true
             break
         fi
     done < "$file"
 
-    if [ -d "$path_completo" ]; then
-        cd "$path_completo"
+    if [[ "$found_repo" == true ]]; then
+        cd "$current_line_repo"
+
+        if [[ "$git_status" == true ]]; then
+            git status
+        fi
 
         case $linguagem in
             python) 
@@ -98,7 +104,7 @@ act() {
         esac
 
         if [ "$vim" = true ]; then
-            nvim "$path_completo"
+            nvim "$current_line_repo"
         fi
     else
         echo "Repo não existe."
@@ -155,7 +161,7 @@ _act_completion() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     case "$prev" in
-        -*e*) COMPREPLY=( $(compgen -W "$(_get_ide)" -- "$cur") ) ;;
+        -*s*) COMPREPLY=( $(compgen -W "$(_get_ide)" -- "$cur") ) ;;
         *) COMPREPLY=( $(compgen -W "$(_get_projects)" -- "$cur") ) ;;
     esac
 }
@@ -190,11 +196,7 @@ _get_conda_envs() {
 }
 
 _get_linguagens() {
-    printf '%s\n' various python lua bash c-sharp go odin
-}
-
-_get_ide() {
-    printf '%s\n' code antigravity vim
+    printf '%s\n' various python lua bash c-sharp go odin md
 }
 
 _get_projects() {
