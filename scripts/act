@@ -70,6 +70,7 @@ act() {
         cd "$current_line_repo"
 
         if [[ "$git_status" == true ]]; then
+            git fetch
             git status
         fi
 
