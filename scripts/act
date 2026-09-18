@@ -121,50 +121,6 @@ act() {
     fi
 }
 
-actadd() {
-    local file="$HOME/.act_projects"
-    local path="$(pwd)"
-
-    touch "$file"
-
-    [[ -z "$1" ]] && echo "Função precisa de pelo menos um argumento." && return
-    local linguagem="$1"
-
-    while IFS= read -r line; do
-        project="${line%%:*}"
-        if [[ "$path" = "$project" ]]; then
-            echo "Projeto já registrado."
-            return
-        fi
-    done < "$file"
-
-    if [[ -n "$2" ]]; then
-        echo "${path}:${linguagem}:${2}" >> "$file"
-    else
-        echo "${path}:${linguagem}" >> "$file"
-    fi
-}
-
-actrm() {
-    local file="$HOME/.act_projects"
-    local cwd="$(pwd)"
-    [[ -f "$file" ]] || return
-    local temp=$(mktemp)
-
-    while read -r path; do
-        [[ "${path%%:*}" == "$cwd" ]] && continue
-        echo "$path" >> "$temp"
-    done < "$file"
-
-    mv "$temp" "$file"
-}
-
-actls() {
-    local file="$HOME/.act_projects"
-    [[ -f "$file" ]] || return
-    cat -n "$file"
-}
-
 _act_completion() {
     local cur prev
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -176,46 +132,3 @@ _act_completion() {
     esac
 }
 complete -F _act_completion act
-
-_actadd_completion() {
-    local cur prev
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-
-    if [[ "$prev" == "actadd" ]]; then
-        COMPREPLY=( $(compgen -W "$(_get_linguagens)" -- "$cur") )
-    else
-        case "$prev" in
-            python) 
-                if [ -d "$MINICONDA_PATH" ]; then
-                    COMPREPLY=( $(compgen -W "$(_get_conda_envs)" -- "$cur") ) 
-                fi
-                ;;
-        esac
-    fi
-}
-complete -F _actadd_completion actadd
-
-_get_conda_envs() {
-    local envs=()
-    while read -r name _; do
-        [[ $name == "#" || -z $name ]] && continue
-        envs+=("$name")
-    done < <(conda info --envs)
-    printf '%s\n' "${envs[@]}"
-}
-
-_get_linguagens() {
-    printf '%s\n' various python lua bash c-sharp go odin markdown uv-python
-}
-
-_get_projects() {
-    local file="$HOME/.act_projects"
-    [[ -f "$file" ]] || return
-
-    while IFS= read -r line; do
-        [[ -z $line ]] && continue
-        local path="${line%%:*}"
-        printf '%s\n' "${path##*/}"
-    done < "$file"
-}

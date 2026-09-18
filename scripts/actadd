@@ -1,0 +1,44 @@
+#!/bin/bash
+
+actadd() {
+    local file="$HOME/.act_projects"
+    local path="$(pwd)"
+
+    touch "$file"
+
+    [[ -z "$1" ]] && echo "Função precisa de pelo menos um argumento." && return
+    local linguagem="$1"
+
+    while IFS= read -r line; do
+        project="${line%%:*}"
+        if [[ "$path" = "$project" ]]; then
+            echo "Projeto já registrado."
+            return
+        fi
+    done < "$file"
+
+    if [[ -n "$2" ]]; then
+        echo "${path}:${linguagem}:${2}" >> "$file"
+    else
+        echo "${path}:${linguagem}" >> "$file"
+    fi
+}
+
+_actadd_completion() {
+    local cur prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [[ "$prev" == "actadd" ]]; then
+        COMPREPLY=( $(compgen -W "$(_get_linguagens)" -- "$cur") )
+    else
+        case "$prev" in
+            python) 
+                if [ -d "$MINICONDA_PATH" ]; then
+                    COMPREPLY=( $(compgen -W "$(_get_conda_envs)" -- "$cur") ) 
+                fi
+                ;;
+        esac
+    fi
+}
+complete -F _actadd_completion actadd

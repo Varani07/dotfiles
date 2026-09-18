@@ -1,0 +1,25 @@
+#!/bin/bash
+
+_get_conda_envs() {
+    local envs=()
+    while read -r name _; do
+        [[ $name == "#" || -z $name ]] && continue
+        envs+=("$name")
+    done < <(conda info --envs)
+    printf '%s\n' "${envs[@]}"
+}
+
+_get_linguagens() {
+    printf '%s\n' various python lua bash c-sharp go odin markdown uv-python
+}
+
+_get_projects() {
+    local file="$HOME/.act_projects"
+    [[ -f "$file" ]] || return
+
+    while IFS= read -r line; do
+        [[ -z $line ]] && continue
+        local path="${line%%:*}"
+        printf '%s\n' "${path##*/}"
+    done < "$file"
+}

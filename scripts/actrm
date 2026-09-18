@@ -1,0 +1,15 @@
+#!/bin/bash
+
+actrm() {
+    local file="$HOME/.act_projects"
+    local cwd="$(pwd)"
+    [[ -f "$file" ]] || return
+    local temp=$(mktemp)
+
+    while read -r path; do
+        [[ "${path%%:*}" == "$cwd" ]] && continue
+        echo "$path" >> "$temp"
+    done < "$file"
+
+    mv "$temp" "$file"
+}
