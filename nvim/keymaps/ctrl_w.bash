@@ -1,0 +1,8 @@
+h   :  n  : "janela a esquerda"
+j   :  n  : "janela abaixo"
+k   :  n  : "janela acima"
+l   :  n  : "janela a direita"
+q   :  n  : "fecha a janela"
+s   :  n  : "split horizontal"
+v   :  n  : "split vertical"
+=   :  n  : "iguala o tamanho das janelas"

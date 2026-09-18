@@ -2,7 +2,11 @@ local run = require("scripts.run")
 
 vim.g.mapleader = " "
 
-vim.keymap.set("n", "<leader>c", "o<BS>}<C-c>O")
+vim.keymap.set("n", "<C-q>", "ggVG")
+vim.keymap.set("n", "<leader>b", "0w")
+
+-- vim.keymap.set("n", "<leader>c", "o<BS>}<C-c>O")
+vim.keymap.set("n", "<leader>c", "$a,<C-c>:w<CR>")
 vim.keymap.set("n", "<leader>k", ":Act ")
 vim.keymap.set("n", "<leader>r", run.run_file,
     {
@@ -33,7 +37,6 @@ vim.keymap.set("x", "<leader>p", "\"_dP")
 
 vim.keymap.set("n", "<leader>y", "\"+y")
 vim.keymap.set("v", "<leader>y", "\"+y")
-vim.keymap.set("n", "<leader>Y", "\"+Y")
 
 vim.keymap.set("n", "<leader>d", "\"_d")
 vim.keymap.set("v", "<leader>d", "\"_d")
