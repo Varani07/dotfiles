@@ -1,21 +1,8 @@
 #!/bin/bash
 
-# Author: Varani07
-#
-# Description:
-# ...
-#
-# Usage:
-# actadd <programming-language>
-# actadd <programming-language> <environment>
-# actrm
-# actls
-# act
-# act <project>
-# act -e <editor> <project>
-# act -w <start-point> <project>
 
 MINICONDA_PATH="$HOME/miniconda3"
+UV_PATH=(/usr/lib/python*/site-packages/uv)
 
 act() {
     local OPTIND
@@ -29,6 +16,10 @@ act() {
             s) iniciar=true ;;
             v) vim=true ;;
             g) git_status=true ;;
+            *)
+                echo "Flag inválida" >&2
+                exit 1
+                ;;
         esac
     done
 
@@ -37,9 +28,12 @@ act() {
     local repo="$1"
 
     if [ -z "$repo" ]; then
-        cd $HOME
+        cd "$HOME" || return
         if [ -d "$MINICONDA_PATH" ]; then
             conda activate base
+        fi
+        if [[ -d "${UV_PATH[0]}" ]]; then
+            deactivate 2>/dev/null
         fi
         return
     fi
@@ -67,7 +61,7 @@ act() {
     done < "$file"
 
     if [[ "$found_repo" == true ]]; then
-        cd "$current_line_repo"
+        cd "$current_line_repo" || return
 
         if [[ "$git_status" == true ]]; then
             git fetch
@@ -75,15 +69,30 @@ act() {
         fi
 
         case $linguagem in
-            python) 
-                if [[ -n "$ambiente" ]]; then
-                    conda activate "$ambiente"
+            python | uv-python) 
+                python_exe=""
+                for py_exe in python3 python; do
+                    if $py_exe --version >/dev/null 2>&1; then
+                        python_exe=$py_exe
+                    fi
+                done
+                if [[ -z "$python_exe" ]]; then
+                    echo "Python não encontrado no sistema..." >&2
+                    exit 1
                 fi
-                if [ "$iniciar" = true ]; then
-                    if [[ -n "$entry_point" ]]; then
-                        python "${entry_point}.py"
-                    else
-                        python main.py
+                if [[ "$linguagem" == "python" ]]; then
+                    if [[ -n "$ambiente" ]]; then
+                        conda activate "$ambiente"
+                    fi
+                    if [[  "$iniciar" == true  ]]; then
+                        $python_exe main.py
+                    fi
+                else
+                    source "${current_line_repo}/.venv/bin/activate"
+                    current_line_repo+="/src/${repo/-/_}"
+                    cd "$current_line_repo" || return
+                    if [[ "$iniciar" == true  ]]; then
+                        uv run main.py
                     fi
                 fi
                 ;;
@@ -197,7 +206,7 @@ _get_conda_envs() {
 }
 
 _get_linguagens() {
-    printf '%s\n' various python lua bash c-sharp go odin md
+    printf '%s\n' various python lua bash c-sharp go odin markdown uv-python
 }
 
 _get_projects() {
