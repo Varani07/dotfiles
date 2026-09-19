@@ -1,15 +1,48 @@
 #!/bin/bash
 
+
+source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp"
+
 actadd() {
-    local file="$HOME/.act_projects"
-    local path="$(pwd)"
+    local file="$HOME/.act/act_projects"
+    local path=""
+    path="$(pwd)"
 
-    touch "$file"
+    if [[ ! -d "$HOME/.act" ]]; then
+        mkdir -p "$HOME/.act"
+        if [[ -f "$HOME/.act_projects" ]]; then
+            mv "$HOME/.act_projects" "$file"
+        else
+            touch "$file"
+        fi
+    fi
 
-    [[ -z "$1" ]] && echo "Função precisa de pelo menos um argumento." && return
+    # python:(f/d):start/path/main.py:from/path/
+    local from_path=""
+    local start_path=""
+    local exec_type=""
+    local erro=""
+
+    while getopts "f:s:t:" opt; do
+        case $opt in
+            f) from_path="$OPTARG" ;;
+            s) start_path="$OPTARG" ;;
+            t)
+                exec_type="$OPTARG"
+                if [[ "$exec_type" != "d" && "$exec_type" != "f" ]]; then
+                    erro+="Flag -t só aceita d ou f. "
+                fi
+                ;;
+            *) erro+="Flag inválida. " ;;
+        esac
+    done
+    echo "aa $erro"
+    [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
+    shift $((OPTIND - 1))
+    [[ -z "$1" ]] && echo "Função precisa de pelo menos um argumento." >&2 && return 1
     local linguagem="$1"
 
-    while IFS= read -r line; do
+    while read -r line; do
         project="${line%%:*}"
         if [[ "$path" = "$project" ]]; then
             echo "Projeto já registrado."
@@ -30,13 +63,21 @@ _actadd_completion() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     if [[ "$prev" == "actadd" ]]; then
-        COMPREPLY=( $(compgen -W "$(_get_linguagens)" -- "$cur") )
+        mapfile -t COMPREPLY < <(compgen -W "$(_get_linguagens)" -- "$cur")
     else
         case "$prev" in
             python) 
                 if [ -d "$MINICONDA_PATH" ]; then
-                    COMPREPLY=( $(compgen -W "$(_get_conda_envs)" -- "$cur") ) 
+                    mapfile -t COMPREPLY < <(compgen -W "$(_get_conda_envs)" -- "$cur")
                 fi
+                ;;
+            -f)
+                compopt -o filenames
+                mapfile -t COMPREPLY < <(compgen -f -- "$cur")
+                ;;
+            -s)
+                compopt -o filenames
+                mapfile -t COMPREPLY < <(compgen -d -- "$cur")
                 ;;
         esac
     fi

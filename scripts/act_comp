@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 _get_conda_envs() {
     local envs=()
     while read -r name _; do

@@ -1,6 +1,8 @@
 #!/bin/bash
 
 
+source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp"
+
 MINICONDA_PATH="$HOME/miniconda3"
 UV_PATH=(/usr/lib/python*/site-packages/uv)
 
@@ -10,22 +12,30 @@ act() {
     local iniciar=false
     local vim=false
     local git_status=false
+    local erro=""
 
-    while getopts "svg" opt; do
+    while getopts ":svg" opt; do
         case $opt in
             s) iniciar=true ;;
             v) vim=true ;;
             g) git_status=true ;;
-            *)
-                echo "Flag inválida" >&2
-                exit 1
-                ;;
+            \?) erro+=$(printf "Flag -%s é inválida. " "$OPTARG") ;;
         esac
     done
+
+    if [[ -n "$erro" ]]; then
+        echo "$erro" >&2
+        return 1
+    fi
 
     shift $((OPTIND - 1))
 
     local repo="$1"
+    local file="$HOME/.act/act_projects"
+    if [[ ! -f "$file" ]]; then
+        echo "Primeiro adicione um projeto." >&2
+        return 1
+    fi
 
     if [ -z "$repo" ]; then
         cd "$HOME" || return
@@ -38,7 +48,6 @@ act() {
         return
     fi
 
-    local file="$HOME/.act_projects"
     local current_line_repo=""
     local linguagem=""
     local ambiente=""

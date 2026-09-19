@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 actrm() {
     local file="$HOME/.act_projects"
     local cwd="$(pwd)"
