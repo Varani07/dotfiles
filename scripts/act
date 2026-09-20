@@ -5,7 +5,7 @@ source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp
 
 MINICONDA_PATH="$HOME/miniconda3"
 UV_PATH=(/usr/lib/python*/site-packages/uv)
-UV_CONDA_PATH=($HOME/miniconda3/lib/python*/site-packages/uv)
+UV_CONDA_PATH=("$HOME"/miniconda3/lib/python*/site-packages/uv)
 
 language_handling() {
     local repo_config="$1"
@@ -66,6 +66,8 @@ starting_point_menu() {
 
     mapfile -t lines < "$repo_config"
     local index=$((0))
+
+    if (())
 
     if [[ "$first_run" == false ]]; then
         cat -n "$repo_config"
