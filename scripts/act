@@ -5,6 +5,86 @@ source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp
 
 MINICONDA_PATH="$HOME/miniconda3"
 UV_PATH=(/usr/lib/python*/site-packages/uv)
+UV_CONDA_PATH=($HOME/miniconda3/lib/python*/site-packages/uv)
+
+language_handling() {
+    local repo_config="$1"
+    local run="$2"
+
+    local lang="${repo_config%%:*}"
+    local from_path="${repo_config##*:}"
+    repo_config="${repo_config#*:}"
+    repo_config="${repo_config%:*}"
+    local exec_type="${repo_config%%:*}"
+    local exec_path="${repo_config##*:}"
+
+    cd "$from_path" || return
+
+    case "$lang" in
+        python | uv-python) 
+            python_exe=""
+            for py_exe in python3 python; do
+                if $py_exe --version >/dev/null 2>&1; then
+                    python_exe=$py_exe
+                fi
+            done
+            if [[ -z "$python_exe" ]]; then
+                echo "Python não encontrado no sistema..." >&2
+                return 1
+            fi
+            if [[ "$lang" == "python" ]]; then
+                if [[ "$run" == true ]]; then
+                    $python_exe "$exec_path"
+                fi
+            else
+                source "${from_path}/.venv/bin/activate"
+                cd "$from_path" || return
+                if [[ "$run" == true  ]]; then
+                    uv run "$exec_path"
+                fi
+            fi
+            ;;
+        odin)
+            if [[ "$run" == true ]]; then
+                if [[ "$exec_type" == "d" ]]; then
+                    odin run "$exec_path"
+                else
+                    odin run -file "$exec_path"
+                fi
+            fi
+            ;;
+    esac
+}
+
+starting_point_menu() {
+    repo="$1"
+    first_run="$2"
+    run="$3"
+
+    repo_config="${HOME}/.act/projects/${repo}"
+    [[ ! -f "$repo_config" ]] && echo "Configuração de ${repo} não encontrada." >&2 && return 1
+
+    mapfile -t lines < "$repo_config"
+    local index=$((0))
+
+    if [[ "$first_run" == false ]]; then
+        cat -n "$repo_config"
+        read -r -p "Escolha uma opção ou q para sair: " choice
+        [[ "$choice" == "q" ]] && return
+
+        if [[ ! $choice =~ ^-?[0-9]+$ ]]; then
+            echo "Valor fornecido nao e um numero." >&2
+            return 1
+        fi
+
+        if (("${choice}" > "${#lines[@]}" || "${choice}" < 1)); then
+            echo "Escolha invalida." >&2
+            return 1
+        fi
+        index=$((choice - 1))
+    fi
+    language_handling "${lines[$index]}" "$run"
+}
 
 act() {
     local OPTIND
@@ -12,13 +92,30 @@ act() {
     local iniciar=false
     local vim=false
     local git_status=false
+    local specific_starting_point=false
+
     local erro=""
 
-    while getopts ":svg" opt; do
+    while getopts ":svghe" opt; do
         case $opt in
             s) iniciar=true ;;
+            e) specific_starting_point=true ;;
             v) vim=true ;;
             g) git_status=true ;;
+            h)
+                msg=()
+                msg+=("act -v repo")
+                msg+=("act -g repo")
+                msg+=("act -s repo")
+                msg+=("act -e repo")
+                msg+=("Flags:")
+                msg+=("v - Abrir com neovim.")
+                msg+=("g - Git Fetch e Status no repo.")
+                msg+=("s - Inicia o projeto a partir da primeira config presente no arquivo act.")
+                msg+=("e - Menu para escolher como rodar o projeto.")
+                printf "\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
+                return 1
+                ;;
             \?) erro+=$(printf "Flag -%s é inválida. " "$OPTARG") ;;
         esac
     done
@@ -41,92 +138,50 @@ act() {
         cd "$HOME" || return
         if [ -d "$MINICONDA_PATH" ]; then
             conda activate base
+            if [[ -d "${UV_CONDA_PATH}" ]]; then
+                deactivate 2>/dev/null
+            fi
         fi
         if [[ -d "${UV_PATH[0]}" ]]; then
             deactivate 2>/dev/null
         fi
-        return
+        return 1
     fi
 
-    local current_line_repo=""
-    local linguagem=""
-    local ambiente=""
     local found_repo=false
+    local curr_repo=""
 
     while read -r path; do
-        current_line_repo="${path%%:*}"
-        clean_path="${path//:/}"
-        if [[ ${current_line_repo##*/} == "$repo" ]]; then
-            if [ $(( ${#path} - ${#clean_path} )) -eq 1 ]; then
-                linguagem="${path##*:}"
-            else
-                local resto="${path#*:}"
-                linguagem="${resto%%:*}"
-                ambiente="${resto##*:}"
-            fi
+        curr_repo="$path"
+        if [[ "${path##*/}" == "$repo" ]]; then
             found_repo=true
             break
         fi
     done < "$file"
 
     if [[ "$found_repo" == true ]]; then
-        cd "$current_line_repo" || return
+        cd "$curr_repo" || return
+        starting_point_menu "$repo" true false
 
         if [[ "$git_status" == true ]]; then
             git fetch
             git status
         fi
 
-        case $linguagem in
-            python | uv-python) 
-                python_exe=""
-                for py_exe in python3 python; do
-                    if $py_exe --version >/dev/null 2>&1; then
-                        python_exe=$py_exe
-                    fi
-                done
-                if [[ -z "$python_exe" ]]; then
-                    echo "Python não encontrado no sistema..." >&2
-                    exit 1
-                fi
-                if [[ "$linguagem" == "python" ]]; then
-                    if [[ -n "$ambiente" ]]; then
-                        conda activate "$ambiente"
-                    fi
-                    if [[  "$iniciar" == true  ]]; then
-                        $python_exe main.py
-                    fi
-                else
-                    source "${current_line_repo}/.venv/bin/activate"
-                    current_line_repo+="/src/${repo/-/_}"
-                    cd "$current_line_repo" || return
-                    if [[ "$iniciar" == true  ]]; then
-                        uv run main.py
-                    fi
-                fi
-                ;;
-            c-sharp)
-                if [ "$iniciar" = true ]; then
-                    dotnet run
-                fi
-                ;;
-            go)
-                if [ "$iniciar" = true ]; then
-                    go run .
-                fi
-                ;;
-            odin)
-                if [ "$iniciar" = true ]; then
-                    odin run .
-                fi
-                ;;
-        esac
+        if [[  "$vim" == true  ]]; then
+            nvim "$curr_repo"
+        fi
 
-        if [ "$vim" = true ]; then
-            nvim "$current_line_repo"
+        if [[ "$specific_starting_point" == true ]]; then
+            starting_point_menu "$repo" false true
+        fi
+
+        if [[ "$iniciar" == true ]]; then
+            starting_point_menu "$repo" true true
         fi
     else
-        echo "Repo não existe."
+        echo "Repo não existe." >&2
+        return 1
     fi
 }
 
@@ -135,9 +190,6 @@ _act_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    case "$prev" in
-        -*s*) COMPREPLY=( $(compgen -W "$(_get_ide)" -- "$cur") ) ;;
-        *) COMPREPLY=( $(compgen -W "$(_get_projects)" -- "$cur") ) ;;
-    esac
+    [[ "$prev" == "act" || "$prev" == -[sevg] ]] && mapfile -t COMPREPLY < <(compgen -W "$(_get_projects)" -- "$cur")
 }
 complete -F _act_completion act
