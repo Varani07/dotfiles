@@ -4,6 +4,7 @@ vim.g.mapleader = " "
 
 vim.keymap.set("n", "<C-q>", "ggVG")
 vim.keymap.set("n", "<leader>b", "0w")
+vim.keymap.set("n", "<leader>m", ":e<CR>")
 
 -- vim.keymap.set("n", "<leader>c", "o<BS>}<C-c>O")
 vim.keymap.set("n", "<leader>c", "$a,<C-c>:w<CR>")

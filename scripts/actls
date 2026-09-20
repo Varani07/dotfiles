@@ -1,0 +1,52 @@
+#!/bin/bash
+
+
+source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp"
+
+actls() {
+    local file="$HOME/.act"
+    local repo=""
+
+    local OPTIND
+    local erro=""
+
+    while getopts ":r:h" opt; do
+        case $opt in
+            r) repo="$OPTARG" ;;
+            h)
+                msg=()
+                msg+=("actls")
+                msg+=("actls -r nome-repo")
+                msg+=("Flags:")
+                msg+=("r - Nome do repositório.")
+                printf "\n%s\n%s\n\n%s\n\n%s\n\n" "${msg[@]}"
+                return 1
+                ;;
+            :) erro+="Flag -$OPTARG necessita de um argumento. " ;;
+            \?) erro+="Flag -$OPTARG desconhecida. " ;;
+        esac
+    done
+
+    [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
+    [[ ! -d "$file" ]] && echo "Adicione um projeto com actadd primeiro." >&2 && return 1
+
+    if [[ -n "$repo" ]]; then
+        [[ ! -f "${file}/projects/${repo}" ]] && echo "Repo $repo não cadastrado." >&2 && return 1
+        cat -n "${file}/projects/${repo}"
+    else
+        cat -n "${file}/act_projects"
+    fi
+}
+
+_actls_completion() {
+    local cur prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    case "$prev" in
+        -r)
+            mapfile -t COMPREPLY < <(compgen -W "$(_get_projects)" -- "$cur")
+            ;;
+    esac
+}
+complete -F _actls_completion actls

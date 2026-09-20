@@ -1,0 +1,137 @@
+#!/bin/bash
+
+
+source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp"
+
+remove_last_slash() {
+    local path="$1"
+    if [[ "${path: -1}" == "/" ]]; then
+        printf "%s" "${path%/}"
+    else 
+        printf "%s" "$path"
+    fi
+}
+
+add_starting_point() {
+    local lang="$1"
+    local exec_type="${2:-d}"
+    local start="$3"
+    local from="$4"
+    local curr_pos="$5"
+    local repo="$6"
+    local dir_path="$7"
+    dir_path+="/projects"
+    local file_path="${dir_path}/${repo}"
+
+    local output=""
+    output+="$lang"
+    output+=":$exec_type"
+    if [[ -z "$start" ]]; then
+        output+=":$curr_pos"
+    else
+        output+=":${curr_pos}/${start}"
+    fi
+    if [[ -z "$from" ]]; then
+        output+=":$curr_pos"
+    else
+        output+=":${curr_pos}/${from}"
+    fi
+
+    [[ ! -d "$dir_path" ]] && mkdir -p "$dir_path"
+    [[ ! -f "$file_path" ]] && touch "$file_path"
+
+    while read -r path; do
+        [[ "$path" == "$output" ]] && echo "Ponto de partida já cadastrado." >&2 && return 1
+    done < "$file_path"
+    echo "$output" >> "$file_path"
+}
+
+actadd() {
+    local OPTIND
+    local dir_path="$HOME/.act"
+    local file_path="${dir_path}/act_projects"
+    local path=""
+    path="$(pwd)"
+    repo="${path##*/}"
+
+    if [[ ! -d "$HOME/.act" ]]; then
+        mkdir -p "$HOME/.act"
+        if [[ -f "$HOME/.act_projects" ]]; then
+            mv "$HOME/.act_projects" "$file_path"
+        else
+            touch "$file_path"
+        fi
+    fi
+
+    local from_path=""
+    local start_path=""
+    local exec_type=""
+    local erro=""
+
+    while getopts ":f:s:t:h" opt; do
+        case $opt in
+            f) from_path="$(remove_last_slash "$OPTARG")";;
+            s) start_path=$(remove_last_slash "$OPTARG");;
+            t)
+                exec_type="$OPTARG"
+                if [[ "$exec_type" != "d" && "$exec_type" != "f" ]]; then
+                    erro+="Flag -t só aceita d ou f. "
+                fi
+                ;;
+            h)
+                msg=()
+                msg+=("actadd -f path/ -s path/main.py -t f python")
+                msg+=("actadd -f path/ -s path/here/ -t d odin")
+                msg+=("Flags:")
+                msg+=("f - Caminho por onde o projeto irá rodar.")
+                msg+=("s - Caminho até diretório/arquivo que será executado.")
+                msg+=("t - Tipo de execução (d ou f).")
+                printf "\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n\n" "${msg[@]}"
+                return 1
+                ;;
+            :) erro+="Flag -$OPTARG necessita de um argumento. " ;;
+            \?) erro+="Flag -$OPTARG é inválida. " ;;
+        esac
+    done
+
+    [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
+    shift $((OPTIND - 1))
+    [[ -z "$1" ]] && echo "Função precisa de pelo menos um argumento." >&2 && return 1
+    local linguagem="$1"
+
+    while read -r line; do
+        project="${line%%:*}"
+        if [[ "$path" == "$project" ]]; then
+            add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path"
+            return 1
+        fi
+    done < "$file_path"
+
+    echo "${path}" >> "$file_path"
+
+    add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path"
+}
+
+_actadd_completion() {
+    local cur prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    case "$prev" in
+        # python) 
+        #     if [ -d "$MINICONDA_PATH" ]; then
+        #         mapfile -t COMPREPLY < <(compgen -W "$(_get_conda_envs)" -- "$cur")
+        #     fi
+        #     ;;
+        -f)
+            compopt -o filenames
+            mapfile -t COMPREPLY < <(compgen -d -- "$cur")
+            ;;
+        -s)
+            compopt -o filenames
+            mapfile -t COMPREPLY < <(compgen -f -- "$cur")
+            ;;
+        *) mapfile -t COMPREPLY < <(compgen -W "$(_get_linguagens)" -- "$cur") ;;
+    esac
+}
+complete -F _actadd_completion actadd
