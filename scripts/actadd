@@ -23,9 +23,9 @@ reload_file_f() {
         if [[ "$re_type" == "all" ]]; then
             if [[ -f "$all_path" ]]; then
                 while read -r repo_to_rm; do
-                    cd "$repo_to_rm"
+                    cd "$repo_to_rm" || return
                     actrm
-                    cd - >/dev/null
+                    cd - >/dev/null || return
                 done < "$all_path"
             else
                 echo "Primeiro adicione um projeto para usar -r." >&2
@@ -59,6 +59,45 @@ add_env() {
     [[ "$found" == false ]] && echo "$lang" >> "$file_path"
 }
 
+verifications() {
+    local output="$1"
+
+    local lang="${output%%:*}"
+    local p_path="${output##*:}"
+
+    output="${output#*:}"
+    output="${output%:*}"
+
+    local x_type="${output%%:*}"
+    local x_path="${output##*:}"
+
+    [[ ! -e "$x_path" ]] && echo "Caminho de execução informado não existe." >&2 && return 1
+    [[ ! -d "$p_path" ]] && echo "Caminho de início informado não existe." >&2 && return 1
+
+    case "$x_type" in
+        d)
+            [[ ! -d "$x_path" ]] && echo "Caminho de execução deve ser do tipo especificado (d)." >&2 && return 1
+            ;;
+        f)
+            [[ ! -f "$x_path" ]] && echo "Caminho de execução deve ser do tipo especificado (f)." >&2 && return 1
+            ;;
+    esac
+
+    case "$lang" in
+        uv-python | python)
+            [[ "$x_type" == "d" ]] && echo "Opção de execução inválida, use -t f." >&2 && return 1
+            [[ "${x_path##*/}" != *.py ]] && echo "Arquivo de execução com extensão inválida." >&2 && return 1
+            ;;
+        odin)
+            [[ "$x_type" == "f" && "${x_path##*/}" != *.odin ]] && echo "Arquivo de execução com extensão inválida." >&2 && return 1
+            ;;
+        bash)
+            [[ "$x_type" == "d" ]] && echo "Opção de execução inválida, use -t f." >&2 && return 1
+            ;;
+    esac
+    return 0
+}
+
 add_starting_point() {
     local lang="$1"
     local exec_type="${2:-d}"
@@ -90,8 +129,12 @@ add_starting_point() {
             output+=":${curr_pos}/${from}"
         fi
 
-        while read -r path; do
-            [[ "$path" == "$output" ]] && echo "Ponto de partida já cadastrado." >&2 && return 1
+        if ! verifications "$output"; then
+            return 1
+        fi
+
+        while read -r start_points; do
+            [[ "$start_points" == "$output" ]] && echo "Ponto de partida já cadastrado." >&2 && return 1
         done < "$file_path"
 
         echo "$output" >> "$file_path"
@@ -174,11 +217,13 @@ actadd() {
             return 1
         fi
     done < "$file_path"
+    
+    if ! add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"; then
+        return 1
+    fi
+    add_env "$linguagem" "$repo" 
 
     echo "$path" >> "$file_path"
-    
-    add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"
-    add_env "$linguagem" "$repo" 
 }
 
 _actadd_completion() {
