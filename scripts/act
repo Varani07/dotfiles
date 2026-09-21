@@ -11,11 +11,9 @@ menu_f() {
     local repo_config="$1"
     local bcat="$2"
     local run="$3"
+    local -n arr="$4"
 
-    mapfile -t lines < "$repo_config"
     MENU_OUTPUT=$((0))
-
-    [[ ((${#lines[@]} == 0)) && "$run" == true ]] && echo "Nenhum ponto de partida cadastrado para este projeto." >&2 && return 1
 
     while true; do
         "$bcat" "$repo_config"
@@ -27,7 +25,7 @@ menu_f() {
             continue
         fi
 
-        if (("${choice}" > "${#lines[@]}" || "${choice}" < 1)); then
+        if (("${choice}" > "${#arr[@]}" || "${choice}" < 1)); then
             echo "Escolha invalida."
             continue
         fi
@@ -68,10 +66,10 @@ env_menu() {
     mapfile -t lines < "$repo_config"
 
     if [[ "$menu" == true ]]; then
-        if ! menu_f "$repo_config" "$bcat" "$run"; then
+        if ! menu_f "$repo_config" "$bcat" "$run" lines; then
             return 1
         fi
-        index=$(($MENU_OUTPUT))
+        index=$((MENU_OUTPUT))
     fi
     env_handling "${lines[$index]}" "$path" 
 }
@@ -158,12 +156,13 @@ starting_point_menu() {
     [[ ! -f "$repo_config" ]] && echo "Configuração de ${repo} não encontrada." >&2 && return 1
 
     mapfile -t lines < "$repo_config"
+    [[ ((${#lines[@]} == 0)) && "$run" == true ]] && echo "Nenhum ponto de partida cadastrado para este projeto." >&2 && return 1
 
     if [[ "$menu" == true ]]; then
-        if ! menu_f "$repo_config" "$bcat" "$run"; then
+        if ! menu_f "$repo_config" "$bcat" "$run" lines; then
             return 1
         fi
-        index=$(($MENU_OUTPUT))
+        index=$((MENU_OUTPUT))
     fi
     language_handling "${lines[$index]}" "$run" "$path" "$vim"
 }
