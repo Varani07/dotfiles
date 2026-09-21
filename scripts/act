@@ -9,14 +9,14 @@ UV_CONDA_PATH=("$HOME"/miniconda3/lib/python*/site-packages/uv)
 
 menu_f() {
     local repo_config="$1"
-    local bcat="$2"
+    local -n view="$2"
     local run="$3"
     local -n arr="$4"
 
     MENU_OUTPUT=$((0))
 
     while true; do
-        "$bcat" "$repo_config"
+        "${view[@]}" "$repo_config"
         read -r -p "Escolha uma opção ou q para sair: " choice
         [[ "$choice" == "q" ]] && return 1
 
@@ -47,12 +47,12 @@ env_handling() {
 }
 
 env_menu() {
-    local bcat=""
+    local bcat=()
 
     if bat --version 2>/dev/null >&2; then
-        bcat="bat"
+        bcat+=("bat")
     else
-        bcat="cat -n"
+        bcat+=("cat" "-n")
     fi
 
     local repo="$1"
@@ -66,7 +66,7 @@ env_menu() {
     mapfile -t lines < "$repo_config"
 
     if [[ "$menu" == true ]]; then
-        if ! menu_f "$repo_config" "$bcat" "$run" lines; then
+        if ! menu_f "$repo_config" bcat "$run" lines; then
             return 1
         fi
         index=$((MENU_OUTPUT))
@@ -137,12 +137,12 @@ language_handling() {
 }
 
 starting_point_menu() {
-    local bcat=""
+    local bcat=()
 
     if bat --version 2>/dev/null >&2; then
-        bcat="bat"
+        bcat+=("bat")
     else
-        bcat="cat -n"
+        bcat+=("cat" "-n")
     fi
 
     local repo="$1"
@@ -159,7 +159,7 @@ starting_point_menu() {
     [[ ((${#lines[@]} == 0)) && "$run" == true ]] && echo "Nenhum ponto de partida cadastrado para este projeto." >&2 && return 1
 
     if [[ "$menu" == true ]]; then
-        if ! menu_f "$repo_config" "$bcat" "$run" lines; then
+        if ! menu_f "$repo_config" bcat "$run" lines; then
             return 1
         fi
         index=$((MENU_OUTPUT))

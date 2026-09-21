@@ -12,12 +12,12 @@ actls() {
     local OPTIND
     local erro=""
 
-    local bcat=""
+    local bcat=()
 
     if bat --version 2>/dev/null >&2; then
-        bcat="bat"
+        bcat+=("bat")
     else
-        bcat="cat -n"
+        bcat+=("cat" "-n")
     fi
 
     while getopts ":r:hc" opt; do
@@ -46,9 +46,9 @@ actls() {
 
     if [[ -n "$repo" ]]; then
         [[ ! -d "${file}/projects/${repo}" ]] && echo "Repo $repo não cadastrado." >&2 && return 1
-        "$bcat" "${file}/projects/${repo}"/*
+        "${bcat[@]}" "${file}/projects/${repo}"/*
     else
-        "$bcat" "${file}/act_projects"
+        "${bcat[@]}" "${file}/act_projects"
     fi
 }
 
