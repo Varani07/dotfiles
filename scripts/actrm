@@ -5,6 +5,7 @@ actrm() {
     local act_path="$HOME/.act"
     local act_file_path="${act_path}/act_projects"
     local cwd="$(pwd)"
+    local repo="${cwd##*/}"
 
     local OPTIND
     local erro=""
@@ -25,12 +26,12 @@ actrm() {
     [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
     local temp=$(mktemp)
 
-    local project_dir="${act_path}/projects/${cwd##*/}"
-    if [[ ! -f "$project_dir" ]]; then
-        echo "Projeto ${cwd##*/} não encontrado." >&2
+    local project_dir="${act_path}/projects/$repo"
+    if [[ ! -d "$project_dir" ]]; then
+        echo "Projeto $repo não encontrado." >&2
         return 1
     else
-        rm "$project_dir"
+        rm -rf "$project_dir"
     fi
 
     while read -r path; do

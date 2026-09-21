@@ -6,20 +6,33 @@ source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp
 actls() {
     local file="$HOME/.act"
     local repo=""
+    local current_dir=false
+    local cwd="$(pwd)"
 
     local OPTIND
     local erro=""
 
-    while getopts ":r:h" opt; do
+    local bcat=""
+
+    if bat --version 2>/dev/null >&2; then
+        bcat="bat"
+    else
+        bcat="cat -n"
+    fi
+
+    while getopts ":r:hc" opt; do
         case $opt in
             r) repo="$OPTARG" ;;
+            c) current_dir=true ;;
             h)
                 msg=()
                 msg+=("actls")
+                msg+=("actls -c")
                 msg+=("actls -r nome-repo")
                 msg+=("Flags:")
                 msg+=("r - Nome do repositório.")
-                printf "\n%s\n%s\n\n%s\n\n%s\n\n" "${msg[@]}"
+                msg+=("c - Projeto do diretorio atual.")
+                printf "\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n\n" "${msg[@]}"
                 return 1
                 ;;
             :) erro+="Flag -$OPTARG necessita de um argumento. " ;;
@@ -29,12 +42,13 @@ actls() {
 
     [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
     [[ ! -d "$file" ]] && echo "Adicione um projeto com actadd primeiro." >&2 && return 1
+    [[ "$current_dir" == true ]] && repo="${cwd##*/}"
 
     if [[ -n "$repo" ]]; then
-        [[ ! -f "${file}/projects/${repo}" ]] && echo "Repo $repo não cadastrado." >&2 && return 1
-        cat -n "${file}/projects/${repo}"
+        [[ ! -d "${file}/projects/${repo}" ]] && echo "Repo $repo não cadastrado." >&2 && return 1
+        "$bcat" "${file}/projects/${repo}"/*
     else
-        cat -n "${file}/act_projects"
+        "$bcat" "${file}/act_projects"
     fi
 }
 
