@@ -12,6 +12,53 @@ remove_last_slash() {
     fi
 }
 
+reload_file_f() {
+    local re_type="$1"
+    local path="$2"
+    local repo="$3"
+    local all_path="$path/act_projects"
+    local file_path="$path/projects/$repo"
+
+    if [[ -n "$re_type" ]]; then
+        if [[ "$re_type" == "all" ]]; then
+            if [[ -f "$all_path" ]]; then
+                while read -r repo_to_rm; do
+                    cd "$repo_to_rm"
+                    actrm
+                    cd - >/dev/null
+                done < "$all_path"
+            else
+                echo "Primeiro adicione um projeto para usar -r." >&2
+                return 1
+            fi
+        else
+            if [[ -d "$file_path" ]]; then
+                for file in "$file_path"/*; do
+                    rm "$file" && touch "$file"
+                done
+            else
+                echo "Primeiro adicione $repo para usar -r." >&2
+                return 1
+            fi
+        fi
+    fi
+}
+
+add_env() {
+    local lang="$1"
+    local repo="$2"
+    local file_path="$HOME/.act/projects/$repo/env"
+    local found=false
+
+    [[ ! -f "$file_path" ]] && touch "$file_path"
+
+    while read -r line; do
+        [[ "$lang" == "$line" ]] && found=true
+    done < "$file_path"
+
+    [[ "$found" == false ]] && echo "$lang" >> "$file_path"
+}
+
 add_starting_point() {
     local lang="$1"
     local exec_type="${2:-d}"
@@ -20,17 +67,16 @@ add_starting_point() {
     local curr_pos="$5"
     local repo="$6"
     local dir_path="$7"
-    local reload_file="$8"
-    local no_starting_point="$9"
-    dir_path+="/projects"
-    local file_path="${dir_path}/${repo}"
+    local no_starting_point="$8"
+    dir_path+="/projects/$repo"
+    local file_path="${dir_path}/starting_point"
 
     [[ ! -d "$dir_path" ]] && mkdir -p "$dir_path"
     [[ ! -f "$file_path" ]] && touch "$file_path"
 
     local output=""
 
-    if [[ ! "$no_starting_point" ]]; then
+    if [[ "$no_starting_point" == false ]]; then
         output+="$lang"
         output+=":$exec_type"
         if [[ -z "$start" ]]; then
@@ -48,13 +94,7 @@ add_starting_point() {
             [[ "$path" == "$output" ]] && echo "Ponto de partida já cadastrado." >&2 && return 1
         done < "$file_path"
 
-        if [[ "$reload_file" == "file" ]]; then
-            echo "$output" > "$file_path"
-        else
-            echo "$output" >> "$file_path"
-        fi
-    else
-        [[ "$reload_file" == "file" ]] && rm "$file_path" && touch "$file_path"
+        echo "$output" >> "$file_path"
     fi
 }
 
@@ -66,13 +106,15 @@ actadd() {
     path="$(pwd)"
     repo="${path##*/}"
 
-    if [[ ! -d "$HOME/.act" ]]; then
-        mkdir -p "$HOME/.act"
+    if [[ ! -d "$dir_path" ]]; then
+        mkdir -p "$dir_path"
         if [[ -f "$HOME/.act_projects" ]]; then
             mv "$HOME/.act_projects" "$file_path"
         else
             touch "$file_path"
         fi
+    elif [[ ! -f "$file_path" ]]; then
+        mkdir -p "$dir_path" && touch "$file_path"
     fi
 
     local from_path=""
@@ -82,10 +124,10 @@ actadd() {
     local reload_file=""
     local erro=""
 
-    while getopts ":f:s:t:hr:" opt; do
+    while getopts ":p:x:t:hr:" opt; do
         case $opt in
-            f) from_path="$(remove_last_slash "$OPTARG")";;
-            s) start_path=$(remove_last_slash "$OPTARG");;
+            p) from_path="$(remove_last_slash "$OPTARG")";;
+            x) start_path=$(remove_last_slash "$OPTARG");;
             t)
                 exec_type="$OPTARG"
                 if [[ "$exec_type" != "d" && "$exec_type" != "f" ]]; then
@@ -100,15 +142,15 @@ actadd() {
                 ;;
             h)
                 msg=()
-                msg+=("actadd -r various")
-                msg+=("actadd -f path/ -s path/main.py -t f python")
-                msg+=("actadd -f path/ -s path/here/ -t d odin")
+                msg+=("actadd -r file various")
+                msg+=("actadd -p path/ -x path/main.py -t f python")
+                msg+=("actadd -p path/ -x path/here/ -t d odin")
                 msg+=("Flags:")
-                msg+=("f - Caminho por onde o projeto irá rodar.")
-                msg+=("s - Caminho até diretório/arquivo que será executado.")
+                msg+=("p - Caminho por onde o projeto irá rodar.")
+                msg+=("x - Caminho até diretório/arquivo que será executado.")
                 msg+=("t - Tipo de execução (d ou f).")
                 msg+=("r - Reload dos arquivos de config (all ou file).")
-                printf "\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n\n" "${msg[@]}"
+                printf "\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
                 return 1
                 ;;
             :) erro+="Flag -$OPTARG necessita de um argumento. " ;;
@@ -122,21 +164,21 @@ actadd() {
     [[ -z "$exec_type" && -z "$start_path" && -z "$from_path" ]] && no_starting_point=true
     local linguagem="$1"
 
+    reload_file_f "$reload_file" "$dir_path" "$repo"
+
     while read -r line; do
         project="${line%%:*}"
         if [[ "$path" == "$project" ]]; then
-            add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$reload_file" "$no_starting_point"
+            add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"
+            add_env "$linguagem" "$repo" 
             return 1
         fi
     done < "$file_path"
 
-    if [[ "$reload_file" == "all" ]]; then
-        echo "$path" > "$file_path"
-    else
-        echo "${path}" >> "$file_path"
-    fi
-
-    add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$reload_file" "$no_starting_point"
+    echo "$path" >> "$file_path"
+    
+    add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"
+    add_env "$linguagem" "$repo" 
 }
 
 _actadd_completion() {
@@ -150,11 +192,11 @@ _actadd_completion() {
         #         mapfile -t COMPREPLY < <(compgen -W "$(_get_conda_envs)" -- "$cur")
         #     fi
         #     ;;
-        -f)
+        -p)
             compopt -o filenames
             mapfile -t COMPREPLY < <(compgen -d -- "$cur")
             ;;
-        -s)
+        -x)
             compopt -o filenames
             mapfile -t COMPREPLY < <(compgen -f -- "$cur")
             ;;

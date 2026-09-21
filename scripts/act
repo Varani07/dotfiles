@@ -7,21 +7,106 @@ MINICONDA_PATH="$HOME/miniconda3"
 UV_PATH=(/usr/lib/python*/site-packages/uv)
 UV_CONDA_PATH=("$HOME"/miniconda3/lib/python*/site-packages/uv)
 
+menu_f() {
+    local repo_config="$1"
+    local bcat="$2"
+    local run="$3"
+
+    mapfile -t lines < "$repo_config"
+    MENU_OUTPUT=$((0))
+
+    [[ ((${#lines[@]} == 0)) && "$run" == true ]] && echo "Nenhum ponto de partida cadastrado para este projeto." >&2 && return 1
+
+    while true; do
+        "$bcat" "$repo_config"
+        read -r -p "Escolha uma opção ou q para sair: " choice
+        [[ "$choice" == "q" ]] && return 1
+
+        if [[ ! $choice =~ ^-?[0-9]+$ ]]; then
+            echo "Valor fornecido nao e um numero."
+            continue
+        fi
+
+        if (("${choice}" > "${#lines[@]}" || "${choice}" < 1)); then
+            echo "Escolha invalida."
+            continue
+        fi
+        MENU_OUTPUT=$((choice - 1))
+        break
+    done
+}
+
+env_handling() {
+    local repo_config="$1"
+    local path="$2"
+    local lang="$repo_config"
+
+    case "$lang" in
+        uv-python)
+            source "${path}/.venv/bin/activate"
+            ;;
+    esac
+}
+
+env_menu() {
+    local bcat=""
+
+    if bat --version 2>/dev/null >&2; then
+        bcat="bat"
+    else
+        bcat="cat -n"
+    fi
+
+    local repo="$1"
+    local menu="$2"
+    local path="$3"
+    local index=$((0))
+    local repo_config="${HOME}/.act/projects/${repo}/env"
+
+    [[ ! -f "$repo_config" ]] && echo "Configuração de ${repo} não encontrada." >&2 && return 1
+
+    mapfile -t lines < "$repo_config"
+
+    if [[ "$menu" == true ]]; then
+        if ! menu_f "$repo_config" "$bcat" "$run"; then
+            return 1
+        fi
+        index=$(($MENU_OUTPUT))
+    fi
+    env_handling "${lines[$index]}" "$path" 
+}
+
 language_handling() {
     local repo_config="$1"
     local run="$2"
+    local path="$3"
+    local vim="$4"
 
-    local lang="${repo_config%%:*}"
-    local from_path="${repo_config##*:}"
-    repo_config="${repo_config#*:}"
-    repo_config="${repo_config%:*}"
-    local exec_type="${repo_config%%:*}"
-    local exec_path="${repo_config##*:}"
+    local lang=""
+    local from_path=""
+    local exec_type=""
+    local exec_path=""
 
-    cd "$from_path" || return
+    if [[ -n "$repo_config" ]]; then
+        lang="${repo_config%%:*}"
+        from_path="${repo_config##*:}"
+        repo_config="${repo_config#*:}"
+        repo_config="${repo_config%:*}"
+        exec_type="${repo_config%%:*}"
+        exec_path="${repo_config##*:}"
+        if [[ "$vim" == true ]]; then
+            nvim "$from_path"
+            return 0
+        else
+            cd "$from_path" || return
+        fi
+    fi
+
+    [[ "$vim" == true ]] && nvim "$path" && return 0
+    [[ "$run" == "false" ]] && return 0
 
     case "$lang" in
-        python | uv-python) 
+        python) 
             python_exe=""
             for py_exe in python3 python; do
                 if $py_exe --version >/dev/null 2>&1; then
@@ -32,16 +117,13 @@ language_handling() {
                 echo "Python não encontrado no sistema..." >&2
                 return 1
             fi
-            if [[ "$lang" == "python" ]]; then
-                if [[ "$run" == true ]]; then
-                    $python_exe "$exec_path"
-                fi
-            else
-                source "${from_path}/.venv/bin/activate"
-                cd "$from_path" || return
-                if [[ "$run" == true  ]]; then
-                    uv run "$exec_path"
-                fi
+            if [[ "$run" == true ]]; then
+                $python_exe "$exec_path"
+            fi
+            ;;
+        uv-python)
+            if [[ "$run" == true  ]]; then
+                uv run "$exec_path"
             fi
             ;;
         odin)
@@ -57,35 +139,33 @@ language_handling() {
 }
 
 starting_point_menu() {
-    repo="$1"
-    first_run="$2"
-    run="$3"
+    local bcat=""
 
-    repo_config="${HOME}/.act/projects/${repo}"
+    if bat --version 2>/dev/null >&2; then
+        bcat="bat"
+    else
+        bcat="cat -n"
+    fi
+
+    local repo="$1"
+    local menu="$2"
+    local run="$3"
+    local path="$4"
+    local vim="$5"
+    local index=$((0))
+    local repo_config="${HOME}/.act/projects/${repo}/starting_point"
+
     [[ ! -f "$repo_config" ]] && echo "Configuração de ${repo} não encontrada." >&2 && return 1
 
     mapfile -t lines < "$repo_config"
-    local index=$((0))
 
-    if (())
-
-    if [[ "$first_run" == false ]]; then
-        cat -n "$repo_config"
-        read -r -p "Escolha uma opção ou q para sair: " choice
-        [[ "$choice" == "q" ]] && return
-
-        if [[ ! $choice =~ ^-?[0-9]+$ ]]; then
-            echo "Valor fornecido nao e um numero." >&2
+    if [[ "$menu" == true ]]; then
+        if ! menu_f "$repo_config" "$bcat" "$run"; then
             return 1
         fi
-
-        if (("${choice}" > "${#lines[@]}" || "${choice}" < 1)); then
-            echo "Escolha invalida." >&2
-            return 1
-        fi
-        index=$((choice - 1))
+        index=$(($MENU_OUTPUT))
     fi
-    language_handling "${lines[$index]}" "$run"
+    language_handling "${lines[$index]}" "$run" "$path" "$vim"
 }
 
 act() {
@@ -95,27 +175,32 @@ act() {
     local vim=false
     local git_status=false
     local specific_starting_point=false
+    local specific_env=false
 
     local erro=""
 
-    while getopts ":svghe" opt; do
+    while getopts ":xvghep" opt; do
         case $opt in
-            s) iniciar=true ;;
-            e) specific_starting_point=true ;;
+            x) iniciar=true ;;
+            p) specific_starting_point=true ;;
+            e) specific_env=true ;;
             v) vim=true ;;
             g) git_status=true ;;
             h)
                 msg=()
                 msg+=("act -v repo")
                 msg+=("act -g repo")
-                msg+=("act -s repo")
+                msg+=("act -x repo")
+                msg+=("act -ex repo")
                 msg+=("act -e repo")
+                msg+=("act -p repo")
                 msg+=("Flags:")
                 msg+=("v - Abrir com neovim.")
                 msg+=("g - Git Fetch e Status no repo.")
-                msg+=("s - Inicia o projeto a partir da primeira config presente no arquivo act.")
-                msg+=("e - Menu para escolher como rodar o projeto.")
-                printf "\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
+                msg+=("x - Inicia o projeto a partir da primeira config presente no arquivo act.")
+                msg+=("p - Menu para escolher como rodar o projeto.")
+                msg+=("e - Menu para escolher ambiente.")
+                printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
                 return 1
                 ;;
             \?) erro+=$(printf "Flag -%s é inválida. " "$OPTARG") ;;
@@ -163,24 +248,14 @@ act() {
 
     if [[ "$found_repo" == true ]]; then
         cd "$curr_repo" || return
-        starting_point_menu "$repo" true false
 
         if [[ "$git_status" == true ]]; then
             git fetch
             git status
         fi
 
-        if [[  "$vim" == true  ]]; then
-            nvim "$curr_repo"
-        fi
-
-        if [[ "$specific_starting_point" == true ]]; then
-            starting_point_menu "$repo" false true
-        fi
-
-        if [[ "$iniciar" == true ]]; then
-            starting_point_menu "$repo" true true
-        fi
+        env_menu "$repo" "$specific_env" "$curr_repo"
+        starting_point_menu "$repo" "$specific_starting_point" "$iniciar" "$curr_repo" "$vim"
     else
         echo "Repo não existe." >&2
         return 1
@@ -192,6 +267,6 @@ _act_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    [[ "$prev" == "act" || "$prev" == -[sevg] ]] && mapfile -t COMPREPLY < <(compgen -W "$(_get_projects)" -- "$cur")
+    [[ "$prev" == "act" || "$prev" =~ -[xpevg]+ ]] && mapfile -t COMPREPLY < <(compgen -W "$(_get_projects)" -- "$cur")
 }
 complete -F _act_completion act
