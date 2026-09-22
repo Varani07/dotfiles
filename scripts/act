@@ -133,6 +133,9 @@ language_handling() {
                 fi
             fi
             ;;
+        none)
+            [[ "$run" == true ]] && echo "Linguagem de execução não especificada." >&2 && return 1
+            ;;
     esac
 }
 

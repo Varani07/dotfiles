@@ -47,16 +47,20 @@ reload_file_f() {
 add_env() {
     local lang="$1"
     local repo="$2"
+    local no_env="$3"
     local file_path="$HOME/.act/projects/$repo/env"
     local found=false
 
     [[ ! -f "$file_path" ]] && touch "$file_path"
 
+    mapfile -t env_file < "$file_path"
+    [[ "${#env_file[@]}" == 0 && "$no_env" == true ]] && lang="none" && no_env=false
+
     while read -r line; do
         [[ "$lang" == "$line" ]] && found=true
     done < "$file_path"
 
-    [[ "$found" == false ]] && echo "$lang" >> "$file_path"
+    [[ "$found" == false && "$no_env" == false ]] && echo "$lang" >> "$file_path"
 }
 
 verifications() {
@@ -94,24 +98,30 @@ verifications() {
         bash)
             [[ "$x_type" == "d" ]] && echo "Opção de execução inválida, use -t f." >&2 && return 1
             ;;
+        none)
+            [[ "$x_type" == "f" ]] && echo "Opção de execução inválida, use -t d." >&2 && return 1
+            ;;
     esac
     return 0
 }
 
 add_starting_point() {
     local lang="$1"
-    local exec_type="${2:-d}"
-    local start="$3"
-    local from="$4"
-    local curr_pos="$5"
-    local repo="$6"
-    local dir_path="$7"
-    local no_starting_point="$8"
+    local start="$2"
+    local from="$3"
+    local curr_pos="$4"
+    local repo="$5"
+    local dir_path="$6"
+    local no_starting_point="$7"
     dir_path+="/projects/$repo"
     local file_path="${dir_path}/starting_point"
 
+    local exec_type="d"
+
     [[ ! -d "$dir_path" ]] && mkdir -p "$dir_path"
     [[ ! -f "$file_path" ]] && touch "$file_path"
+
+    [[ -n "$start" && -f "$start" ]] && exec_type="f"
 
     local output=""
 
@@ -160,40 +170,41 @@ actadd() {
         mkdir -p "$dir_path" && touch "$file_path"
     fi
 
+    local linguagem="none"
+
     local from_path=""
     local start_path=""
-    local exec_type=""
+
+    local no_env=false
     local no_starting_point=false
+
     local reload_file=""
     local erro=""
 
-    while getopts ":p:x:t:hr:" opt; do
+    while getopts ":p:x:r:l:eh" opt; do
         case $opt in
             p) from_path="$(remove_last_slash "$OPTARG")";;
             x) start_path=$(remove_last_slash "$OPTARG");;
-            t)
-                exec_type="$OPTARG"
-                if [[ "$exec_type" != "d" && "$exec_type" != "f" ]]; then
-                    erro+="Flag -t só aceita d ou f. "
-                fi
-                ;;
             r)
                 reload_file="$OPTARG"
                 if [[ "$reload_file" != "file" && "$reload_file" != "all" ]]; then
                     erro+="Flag -r só aceita all ou file."
                 fi
                 ;;
+            l) linguagem="$OPTARG" ;;
+            e) no_env=true ;;
             h)
                 msg=()
-                msg+=("actadd -r file various")
-                msg+=("actadd -p path/ -x path/main.py -t f python")
-                msg+=("actadd -p path/ -x path/here/ -t d odin")
+                msg+=("actadd -r file")
+                msg+=("actadd -p path/ -x path/main.py -l python")
+                msg+=("actadd -p path/ -x path/here/ -el odin")
                 msg+=("Flags:")
                 msg+=("p - Caminho por onde o projeto irá rodar.")
                 msg+=("x - Caminho até diretório/arquivo que será executado.")
-                msg+=("t - Tipo de execução (d ou f).")
+                msg+=("l - Linguagem (none)")
                 msg+=("r - Reload dos arquivos de config (all ou file).")
-                printf "\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
+                msg+=("e - Não adicionar environment.")
+                printf "\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
                 return 1
                 ;;
             :) erro+="Flag -$OPTARG necessita de um argumento. " ;;
@@ -203,25 +214,23 @@ actadd() {
 
     [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
     shift $((OPTIND - 1))
-    [[ -z "$1" ]] && echo "Função precisa de pelo menos um argumento." >&2 && return 1
-    [[ -z "$exec_type" && -z "$start_path" && -z "$from_path" ]] && no_starting_point=true
-    local linguagem="$1"
+    [[ -z "$start_path" && -z "$from_path" ]] && no_starting_point=true
 
     reload_file_f "$reload_file" "$dir_path" "$repo"
 
     while read -r line; do
         project="${line%%:*}"
         if [[ "$path" == "$project" ]]; then
-            add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"
-            add_env "$linguagem" "$repo" 
+            add_starting_point "$linguagem" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"
+            add_env "$linguagem" "$repo" "$no_env"
             return 1
         fi
     done < "$file_path"
     
-    if ! add_starting_point "$linguagem" "$exec_type" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"; then
+    if ! add_starting_point "$linguagem" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"; then
         return 1
     fi
-    add_env "$linguagem" "$repo" 
+    add_env "$linguagem" "$repo" "$no_env"
 
     echo "$path" >> "$file_path"
 }
@@ -237,15 +246,16 @@ _actadd_completion() {
         #         mapfile -t COMPREPLY < <(compgen -W "$(_get_conda_envs)" -- "$cur")
         #     fi
         #     ;;
-        -p)
+        -*p*)
             compopt -o filenames
             mapfile -t COMPREPLY < <(compgen -d -- "$cur")
             ;;
-        -x)
+        -*x*)
             compopt -o filenames
             mapfile -t COMPREPLY < <(compgen -f -- "$cur")
             ;;
-        *) mapfile -t COMPREPLY < <(compgen -W "$(_get_linguagens)" -- "$cur") ;;
+        -*l*) mapfile -t COMPREPLY < <(compgen -W "$(_get_linguagens)" -- "$cur") ;;
+        -*r*) mapfile -t COMPREPLY < <(compgen -W "$(printf '%s\n' file all)" -- "$cur") ;;
     esac
 }
 complete -F _actadd_completion actadd
