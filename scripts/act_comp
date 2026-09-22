@@ -11,7 +11,7 @@
 # }
 
 _get_linguagens() {
-    printf '%s\n' various python lua bash c-sharp go odin markdown uv-python
+    printf '%s\n' none python uv-python odin  
 }
 
 _get_projects() {
