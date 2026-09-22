@@ -53,6 +53,13 @@ add_env() {
 
     [[ ! -f "$file_path" ]] && touch "$file_path"
 
+    if [[ "$no_env" == false ]]; then
+        case "$lang" in
+            python) echo "$lang não suportado como ambiente, alterado para none." && lang="none" ;;
+            odin) echo "$lang não suportado como ambiente, alterado para none." && lang="none" ;;
+        esac
+    fi
+
     mapfile -t env_file < "$file_path"
     [[ "${#env_file[@]}" == 0 && "$no_env" == true ]] && lang="none" && no_env=false
 
@@ -61,6 +68,7 @@ add_env() {
     done < "$file_path"
 
     [[ "$found" == false && "$no_env" == false ]] && echo "$lang" >> "$file_path"
+    [[ "$found" == true && "$no_env" == false ]] && echo "Ambiente já cadastrado." >&2 && return 1
 }
 
 verifications() {
@@ -80,26 +88,26 @@ verifications() {
 
     case "$x_type" in
         d)
-            [[ ! -d "$x_path" ]] && echo "Caminho de execução deve ser do tipo especificado (d)." >&2 && return 1
+            [[ ! -d "$x_path" ]] && echo "Caminho de execução deve ser um diretório." >&2 && return 1
             ;;
         f)
-            [[ ! -f "$x_path" ]] && echo "Caminho de execução deve ser do tipo especificado (f)." >&2 && return 1
+            [[ ! -f "$x_path" ]] && echo "Caminho de execução deve ser um arquivo." >&2 && return 1
             ;;
     esac
 
     case "$lang" in
         uv-python | python)
-            [[ "$x_type" == "d" ]] && echo "Opção de execução inválida, use -t f." >&2 && return 1
+            [[ "$x_type" == "d" ]] && echo "Opção de execução inválida." >&2 && return 1
             [[ "${x_path##*/}" != *.py ]] && echo "Arquivo de execução com extensão inválida." >&2 && return 1
             ;;
         odin)
             [[ "$x_type" == "f" && "${x_path##*/}" != *.odin ]] && echo "Arquivo de execução com extensão inválida." >&2 && return 1
             ;;
         bash)
-            [[ "$x_type" == "d" ]] && echo "Opção de execução inválida, use -t f." >&2 && return 1
+            [[ "$x_type" == "d" ]] && echo "Opção de execução inválida." >&2 && return 1
             ;;
         none)
-            [[ "$x_type" == "f" ]] && echo "Opção de execução inválida, use -t d." >&2 && return 1
+            [[ "$x_type" == "f" ]] && echo "Opção de execução inválida." >&2 && return 1
             ;;
     esac
     return 0
@@ -181,7 +189,7 @@ actadd() {
     local reload_file=""
     local erro=""
 
-    while getopts ":p:x:r:l:eh" opt; do
+    while getopts ":p:x:r:l:esh" opt; do
         case $opt in
             p) from_path="$(remove_last_slash "$OPTARG")";;
             x) start_path=$(remove_last_slash "$OPTARG");;
@@ -193,6 +201,7 @@ actadd() {
                 ;;
             l) linguagem="$OPTARG" ;;
             e) no_env=true ;;
+            s) no_starting_point=true ;;
             h)
                 msg=()
                 msg+=("actadd -r file")
@@ -204,7 +213,8 @@ actadd() {
                 msg+=("l - Linguagem (none)")
                 msg+=("r - Reload dos arquivos de config (all ou file).")
                 msg+=("e - Não adicionar environment.")
-                printf "\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
+                msg+=("s - Não adicionar ponto de execução.")
+                printf "\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
                 return 1
                 ;;
             :) erro+="Flag -$OPTARG necessita de um argumento. " ;;
@@ -214,7 +224,6 @@ actadd() {
 
     [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
     shift $((OPTIND - 1))
-    [[ -z "$start_path" && -z "$from_path" ]] && no_starting_point=true
 
     reload_file_f "$reload_file" "$dir_path" "$repo"
 
