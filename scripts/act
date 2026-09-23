@@ -59,7 +59,7 @@ env_menu() {
     local menu="$2"
     local path="$3"
     local index=$((0))
-    local repo_config="${HOME}/.act/projects/${repo}/env"
+    local repo_config=".act/env"
 
     [[ ! -f "$repo_config" ]] && echo "Configuração de ${repo} não encontrada." >&2 && return 1
 
@@ -136,6 +136,10 @@ language_handling() {
         none)
             [[ "$run" == true ]] && echo "Linguagem de execução não especificada." >&2 && return 1
             ;;
+        *)
+            echo "Linguagem \"${lang}\" ainda não teve sua execução mapeada." >&2
+            return 1
+            ;;
     esac
 }
 
@@ -154,7 +158,7 @@ starting_point_menu() {
     local path="$4"
     local vim="$5"
     local index=$((0))
-    local repo_config="${HOME}/.act/projects/${repo}/starting_point"
+    local repo_config=".act/starting_point"
 
     [[ ! -f "$repo_config" ]] && echo "Configuração de ${repo} não encontrada." >&2 && return 1
 
@@ -217,7 +221,7 @@ act() {
     shift $((OPTIND - 1))
 
     local repo="$1"
-    local file="$HOME/.act/act_projects"
+    local file="$HOME/.act_projects"
     if [[ ! -f "$file" ]]; then
         echo "Primeiro adicione um projeto." >&2
         return 1

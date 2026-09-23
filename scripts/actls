@@ -4,7 +4,7 @@
 source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp"
 
 actls() {
-    local file="$HOME/.act"
+    local file="$HOME/.act_projects"
     local repo=""
     local current_dir=false
     local cwd="$(pwd)"
@@ -41,14 +41,16 @@ actls() {
     done
 
     [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
-    [[ ! -d "$file" ]] && echo "Adicione um projeto com actadd primeiro." >&2 && return 1
+    [[ ! -f "$file" ]] && echo "Adicione um projeto com actadd primeiro." >&2 && return 1
     [[ "$current_dir" == true ]] && repo="${cwd##*/}"
 
     if [[ -n "$repo" ]]; then
-        [[ ! -d "${file}/projects/${repo}" ]] && echo "Repo $repo não cadastrado." >&2 && return 1
-        "${bcat[@]}" "${file}/projects/${repo}"/*
+        if act "$repo"; then
+            "${bcat[@]}" ".act"/*
+            cd "$cwd"
+        fi
     else
-        "${bcat[@]}" "${file}/act_projects"
+        "${bcat[@]}" "$file"
     fi
 }
 

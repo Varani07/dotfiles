@@ -16,8 +16,7 @@ reload_file_f() {
     local re_type="$1"
     local path="$2"
     local repo="$3"
-    local all_path="$path/act_projects"
-    local file_path="$path/projects/$repo"
+    local all_path="$HOME/.act_projects"
 
     if [[ -n "$re_type" ]]; then
         if [[ "$re_type" == "all" ]]; then
@@ -32,8 +31,8 @@ reload_file_f() {
                 return 1
             fi
         else
-            if [[ -d "$file_path" ]]; then
-                for file in "$file_path"/*; do
+            if [[ -d "$path" ]]; then
+                for file in "$path"/*; do
                     rm "$file" && touch "$file"
                 done
             else
@@ -48,7 +47,7 @@ add_env() {
     local lang="$1"
     local repo="$2"
     local no_env="$3"
-    local file_path="$HOME/.act/projects/$repo/env"
+    local file_path=".act/env"
     local found=false
 
     [[ ! -f "$file_path" ]] && touch "$file_path"
@@ -57,6 +56,8 @@ add_env() {
         case "$lang" in
             python) echo "$lang não suportado como ambiente, alterado para none." && lang="none" ;;
             odin) echo "$lang não suportado como ambiente, alterado para none." && lang="none" ;;
+            uv-python | none) : ;;
+            *) echo "$lang não suportado como ambiente, alterado para none." && lang="none" ;;
         esac
     fi
 
@@ -109,6 +110,7 @@ verifications() {
         none)
             [[ "$x_type" == "f" ]] && echo "Opção de execução inválida." >&2 && return 1
             ;;
+        *) echo "Linguagem \"${lang}\" não configurada para execução." >&2 && return 1
     esac
     return 0
 }
@@ -121,15 +123,13 @@ add_starting_point() {
     local repo="$5"
     local dir_path="$6"
     local no_starting_point="$7"
-    dir_path+="/projects/$repo"
-    local file_path="${dir_path}/starting_point"
+    local file_path=".act/starting_point"
 
     local exec_type="d"
 
-    [[ ! -d "$dir_path" ]] && mkdir -p "$dir_path"
     [[ ! -f "$file_path" ]] && touch "$file_path"
 
-    [[ -n "$start" && -f "$start" ]] && exec_type="f"
+    [[ -f "$start" ]] && exec_type="f"
 
     local output=""
 
@@ -161,22 +161,11 @@ add_starting_point() {
 
 actadd() {
     local OPTIND
-    local dir_path="$HOME/.act"
-    local file_path="${dir_path}/act_projects"
+    local dir_path=".act"
+    local file_path="${HOME}/.act_projects"
     local path=""
     path="$(pwd)"
     repo="${path##*/}"
-
-    if [[ ! -d "$dir_path" ]]; then
-        mkdir -p "$dir_path"
-        if [[ -f "$HOME/.act_projects" ]]; then
-            mv "$HOME/.act_projects" "$file_path"
-        else
-            touch "$file_path"
-        fi
-    elif [[ ! -f "$file_path" ]]; then
-        mkdir -p "$dir_path" && touch "$file_path"
-    fi
 
     local linguagem="none"
 
@@ -188,6 +177,8 @@ actadd() {
 
     local reload_file=""
     local erro=""
+
+    [[ ! -d "$file_path" ]] && touch "$file_path"
 
     while getopts ":p:x:r:l:esh" opt; do
         case $opt in
@@ -204,6 +195,7 @@ actadd() {
             s) no_starting_point=true ;;
             h)
                 msg=()
+                msg+=("actadd -se init (init para inicialização do projeto)")
                 msg+=("actadd -r file")
                 msg+=("actadd -p path/ -x path/main.py -l python")
                 msg+=("actadd -p path/ -x path/here/ -el odin")
@@ -214,7 +206,7 @@ actadd() {
                 msg+=("r - Reload dos arquivos de config (all ou file).")
                 msg+=("e - Não adicionar environment.")
                 msg+=("s - Não adicionar ponto de execução.")
-                printf "\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
+                printf "\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
                 return 1
                 ;;
             :) erro+="Flag -$OPTARG necessita de um argumento. " ;;
@@ -224,6 +216,14 @@ actadd() {
 
     [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
     shift $((OPTIND - 1))
+
+    if [[ -d ".act" ]]; then
+        [[ "$1" == "init" ]] && echo "Projeto já foi inicializado." >&2 && return 1
+    else
+        [[ "$1" != "init" ]] && echo "Primeiro registre o projeto com init." >&2 && return 1
+        mkdir ".act"
+        echo "Projeto registrado."
+    fi
 
     reload_file_f "$reload_file" "$dir_path" "$repo"
 
