@@ -63,7 +63,9 @@ env_menu() {
     [[ ! -f "$repo_config" ]] && echo "Configuração de ${repo} não encontrada." >&2 && return 1
 
     mapfile -t lines < "$repo_config"
-    [[ "$menu" == true ]] && index=$(($(menu_f "$repo_config" bcat "$run" lines))) || return 1
+    if [[ "$menu" == true ]]; then
+        index=$(($(menu_f "$repo_config" bcat "$run" lines))) || return 1
+    fi
     env_handling "${lines[$index]}" "$path" 
 }
 
@@ -157,7 +159,9 @@ starting_point_menu() {
 
     mapfile -t lines < "$repo_config"
     [[ ((${#lines[@]} == 0)) && "$run" == true ]] && echo "Nenhum ponto de partida cadastrado para este projeto." >&2 && return 1
-    [[ "$menu" == true ]] && index=$(($(menu_f "$repo_config" bcat "$run" lines))) || return 1
+    if [[ "$menu" == true ]]; then
+        index=$(($(menu_f "$repo_config" bcat "$run" lines))) || return 1
+    fi
     language_handling "${lines[$index]}" "$run" "$path" "$vim"
 }
 
