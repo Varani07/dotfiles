@@ -18,7 +18,7 @@ _get_projects() {
     local files_path="$HOME/.act_projects"
     [[ -f "$files_path" ]] || return 1 
 
-    while read -r lines; do
+    local lines; while read -r lines; do
         echo "${lines##*/}"
     done < "$files_path"
 }
