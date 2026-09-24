@@ -10,7 +10,7 @@ actrm() {
     local OPTIND
     local erro=""
 
-    while getopts ":h" opt; do
+    local opt; while getopts ":h" opt; do
         case $opt in
             h)
                 msg=()
@@ -33,7 +33,7 @@ actrm() {
         rm -rf "$project_dir"
     fi
 
-    while read -r path; do
+    local path; while read -r path; do
         [[ "${path%%:*}" == "$cwd" ]] && continue
         echo "$path" >> "$temp"
     done < "$act_path"

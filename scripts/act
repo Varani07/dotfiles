@@ -17,7 +17,7 @@ menu_f() {
 
     while true; do
         "${view[@]}" "$repo_config" >&2
-        read -r -p "Escolha uma opção ou q para sair: " choice
+        local choice; read -r -p "Escolha uma opção ou q para sair: " choice
         [[ "$choice" == "q" ]] && return 1
 
         if [[ ! $choice =~ ^-?[0-9]+$ ]]; then
@@ -62,7 +62,7 @@ env_menu() {
 
     [[ ! -f "$repo_config" ]] && echo "Configuração de ${repo} não encontrada." >&2 && return 1
 
-    mapfile -t lines < "$repo_config"
+    local lines; mapfile -t lines < "$repo_config"
     if [[ "$menu" == true ]]; then
         index=$(($(menu_f "$repo_config" bcat "$run" lines))) || return 1
     fi
@@ -157,7 +157,7 @@ starting_point_menu() {
 
     [[ ! -f "$repo_config" ]] && echo "Configuração de ${repo} não encontrada." >&2 && return 1
 
-    mapfile -t lines < "$repo_config"
+    local lines; mapfile -t lines < "$repo_config"
     [[ ((${#lines[@]} == 0)) && "$run" == true ]] && echo "Nenhum ponto de partida cadastrado para este projeto." >&2 && return 1
     if [[ "$menu" == true ]]; then
         index=$(($(menu_f "$repo_config" bcat "$run" lines))) || return 1
@@ -176,7 +176,7 @@ act() {
 
     local erro=""
 
-    while getopts ":xvghep" opt; do
+    local opt; while getopts ":xvghep" opt; do
         case $opt in
             x) iniciar=true ;;
             p) specific_starting_point=true ;;
@@ -235,7 +235,7 @@ act() {
     local found_repo=false
     local curr_repo=""
 
-    while read -r path; do
+    local path; while read -r path; do
         curr_repo="$path"
         if [[ "${path##*/}" == "$repo" ]]; then
             found_repo=true

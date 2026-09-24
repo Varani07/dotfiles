@@ -21,7 +21,7 @@ actls() {
         bcat+=("cat" "-n")
     fi
 
-    while getopts ":r:hc" opt; do
+    local opt; while getopts ":r:hc" opt; do
         case $opt in
             r) repo="$OPTARG" ;;
             c) current_dir=true ;;

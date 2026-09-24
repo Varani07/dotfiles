@@ -19,7 +19,7 @@ _act_recursive_search() {
             [[ "$prev_dir" == "$curr_dir" ]] && echo "Projeto não encontrado." >&2 && cd "$cwd" && return 1
             [[ ! -d "${curr_dir}/.act" ]] && continue
             repo="${curr_dir##*/}"
-            read -r -p "Selecionar projeto \"${repo}\" [Y/n] or q to quit " answer
+            local answer; read -r -p "Selecionar projeto \"${repo}\" [Y/n] or q to quit " answer
             [[ -z "$answer" ]] && answer="y"
             answer="${answer,,}"
             case "$answer" in
