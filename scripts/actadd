@@ -219,11 +219,10 @@ actadd() {
 
     if [[ -d ".act" ]]; then
         [[ "$1" == "init" ]] && echo "Projeto já foi inicializado." >&2 && return 1
-        [[ "$1" == "sync" ]] && echo "$path" >> "$file_path" && return
+        [[ "$1" == "sync" ]] && echo "$path" >> "$file_path" && echo "Projeto registrado." && return
     else
         [[ "$1" != "init" ]] && echo "Primeiro registre o projeto com init." >&2 && return 1
         mkdir ".act"
-        echo "Projeto registrado."
     fi
 
     reload_file_f "$reload_file" "$dir_path" "$repo"
@@ -243,6 +242,7 @@ actadd() {
     add_env "$linguagem" "$repo" "$no_env"
 
     echo "$path" >> "$file_path"
+    [[ "$1" == "init" ]] && echo "Projeto registrado."
 }
 
 _actadd_completion() {
