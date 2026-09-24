@@ -45,10 +45,34 @@ actls() {
     [[ "$current_dir" == true ]] && repo="${cwd##*/}"
 
     if [[ -n "$repo" ]]; then
-        if act "$repo"; then
-            "${bcat[@]}" ".act"/*
-            cd "$cwd"
+        if ! act "$repo"; then
+            local found=false
+            local next_dir=true
+            local prev_dir=""
+            local curr_dir=""
+            local answer=""
+            while ! "$found"; do
+                if [[ "$next_dir" == true ]]; then
+                    prev_dir="$(pwd)"
+                    cd ..
+                    curr_dir="$(pwd)"
+                fi
+                [[ "$prev_dir" == "$curr_dir" ]] && echo "Projeto não encontrado." >&2 && cd "$cwd" && return 1
+                [[ ! -d "${curr_dir}/.act" ]] && continue
+                repo="${curr_dir##*/}"
+                read -r -p "Selecionar projeto \"${repo}\" [Y/n] or q to quit " answer
+                [[ -z "$answer" ]] && answer="y"
+                answer="${answer,,}"
+                case "$answer" in
+                    y) found=true ;;
+                    n) next_dir=true ;;
+                    q) cd "$cwd" && return ;;
+                    *) echo "Valor desconhecido." && next_dir=false ;;
+                esac
+            done
         fi
+        "${bcat[@]}" ".act"/*
+        cd "$cwd"
     else
         "${bcat[@]}" "$file"
     fi

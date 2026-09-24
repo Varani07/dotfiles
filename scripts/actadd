@@ -178,7 +178,7 @@ actadd() {
     local reload_file=""
     local erro=""
 
-    [[ ! -d "$file_path" ]] && touch "$file_path"
+    [[ ! -f "$file_path" ]] && touch "$file_path"
 
     while getopts ":p:x:r:l:esh" opt; do
         case $opt in
@@ -219,6 +219,7 @@ actadd() {
 
     if [[ -d ".act" ]]; then
         [[ "$1" == "init" ]] && echo "Projeto já foi inicializado." >&2 && return 1
+        [[ "$1" == "sync" ]] && echo "$path" >> "$file_path" && return
     else
         [[ "$1" != "init" ]] && echo "Primeiro registre o projeto com init." >&2 && return 1
         mkdir ".act"
