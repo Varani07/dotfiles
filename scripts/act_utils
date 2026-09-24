@@ -1,0 +1,35 @@
+#!/bin/bash
+
+
+_act_recursive_search() {
+    local repo="$1"
+    local cwd="$2"
+
+    if ! act "$repo"; then
+        local next_dir=true
+        local prev_dir=""
+        local curr_dir=""
+        local answer=""
+        while true; do
+            if [[ "$next_dir" == true ]]; then
+                prev_dir="$(pwd)"
+                cd ..
+                curr_dir="$(pwd)"
+            fi
+            [[ "$prev_dir" == "$curr_dir" ]] && echo "Projeto não encontrado." >&2 && cd "$cwd" && return 1
+            [[ ! -d "${curr_dir}/.act" ]] && continue
+            repo="${curr_dir##*/}"
+            read -r -p "Selecionar projeto \"${repo}\" [Y/n] or q to quit " answer
+            [[ -z "$answer" ]] && answer="y"
+            answer="${answer,,}"
+            case "$answer" in
+                y) printf "%s\n" "$repo" && return 0 ;;
+                n) next_dir=true ;;
+                q) cd "$cwd" && return 1 ;;
+                *) echo "Valor desconhecido." >&2 && next_dir=false ;;
+            esac
+        done
+    else
+        printf "%s\n" "$repo" && return 0
+    fi
+}
