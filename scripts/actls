@@ -47,7 +47,7 @@ actls() {
 
     if [[ -n "$repo" ]]; then
         repo=$(_act_recursive_search "$repo" "$cwd") || return 1
-        act "$repo"
+        act -r "$repo"
         "${bcat[@]}" ".act"/*
         cd "$cwd"
     else

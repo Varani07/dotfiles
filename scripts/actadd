@@ -130,7 +130,7 @@ add_starting_point() {
 
     [[ ! -f "$file_path" ]] && touch "$file_path"
 
-    [[ -f "$start" ]] && exec_type="f"
+    [[ -n "$start" ]] && [[ -f "${curr_pos}/${start}" ]] && exec_type="f"
 
     local output=""
 
@@ -240,7 +240,7 @@ actadd() {
             mkdir ".act"
         else
             repo=$(_act_recursive_search "$repo" "$path") || return 1
-            act "$repo"
+            act -r "$repo"
             path="$(pwd)"
         fi
     fi
@@ -251,17 +251,15 @@ actadd() {
     while read -r line; do
         project="${line%%:*}"
         if [[ "$path" == "$project" ]]; then
-            add_starting_point "$linguagem" "$start_path" "$from_path" "$prev_path" "$repo" "$dir_path" "$no_starting_point"
-            add_env "$linguagem" "$repo" "$no_env"
+            add_starting_point "$linguagem" "$start_path" "$from_path" "$prev_path" "$repo" "$dir_path" "$no_starting_point" || cd "$prev_path" && return 1
+            add_env "$linguagem" "$repo" "$no_env" || cd "$prev_path" && return 1
             cd "$prev_path"
             return 1
         fi
     done < "$file_path"
     
-    if ! add_starting_point "$linguagem" "$start_path" "$from_path" "$prev_path" "$repo" "$dir_path" "$no_starting_point"; then
-        return 1
-    fi
-    add_env "$linguagem" "$repo" "$no_env"
+    add_starting_point "$linguagem" "$start_path" "$from_path" "$prev_path" "$repo" "$dir_path" "$no_starting_point" || cd "$prev_path" && return 1
+    add_env "$linguagem" "$repo" "$no_env" || cd "$prev_path" && return 1
 
     echo "$path" >> "$file_path"
     [[ "$1" == "init" ]] && echo "Projeto registrado."

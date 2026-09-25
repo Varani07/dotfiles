@@ -30,7 +30,7 @@ actrm() {
 
     if [[ ! -d "$project_dir" ]]; then
         repo=$(_act_recursive_search "$repo" "$cwd") || return 1
-        act "$repo"
+        act -r "$repo"
         rm -rf "$project_dir"
         cd "$cwd"
     else

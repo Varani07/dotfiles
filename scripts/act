@@ -9,6 +9,18 @@ MINICONDA_PATH="$HOME/miniconda3"
 UV_PATH=(/usr/lib/python*/site-packages/uv)
 UV_CONDA_PATH=("$HOME"/miniconda3/lib/python*/site-packages/uv)
 
+deactivate_env() {
+    if [ -d "$MINICONDA_PATH" ]; then
+        conda activate base
+        if [[ -d "${UV_CONDA_PATH}" ]]; then
+            deactivate 2>/dev/null
+        fi
+    fi
+    if [[ -d "${UV_PATH[0]}" ]]; then
+        deactivate 2>/dev/null
+    fi
+}
+
 menu_f() {
     local repo_config="$1"
     local -n view="$2"
@@ -42,6 +54,7 @@ env_handling() {
         uv-python)
             source "${path}/.venv/bin/activate"
             ;;
+        none) deactivate_env ;;
     esac
 }
 
@@ -173,16 +186,18 @@ act() {
     local git_status=false
     local specific_starting_point=false
     local specific_env=false
+    local project_path=false
 
     local erro=""
 
-    local opt; while getopts ":xvghep" opt; do
+    local opt; while getopts ":xvghepr" opt; do
         case $opt in
             x) iniciar=true ;;
             p) specific_starting_point=true ;;
             e) specific_env=true ;;
             v) vim=true ;;
             g) git_status=true ;;
+            r) project_path=true ;;
             h)
                 msg=()
                 msg+=("act -v repo")
@@ -197,7 +212,8 @@ act() {
                 msg+=("x - Inicia o projeto a partir da primeira config presente no arquivo act.")
                 msg+=("p - Menu para escolher como rodar o projeto.")
                 msg+=("e - Menu para escolher ambiente.")
-                printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
+                msg+=("r - Apenas vai´para o diretório do projeto.")
+                printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
                 return 1
                 ;;
             \?) erro+=$(printf "Flag -%s é inválida. " "$OPTARG") ;;
@@ -220,15 +236,7 @@ act() {
 
     if [ -z "$repo" ]; then
         cd "$HOME" || return
-        if [ -d "$MINICONDA_PATH" ]; then
-            conda activate base
-            if [[ -d "${UV_CONDA_PATH}" ]]; then
-                deactivate 2>/dev/null
-            fi
-        fi
-        if [[ -d "${UV_PATH[0]}" ]]; then
-            deactivate 2>/dev/null
-        fi
+        deactivate_env
         return 1
     fi
 
@@ -245,6 +253,8 @@ act() {
 
     if [[ "$found_repo" == true ]]; then
         cd "$curr_repo" || return
+
+        [[ "$project_path" == true ]] && return 0
 
         if [[ "$git_status" == true ]]; then
             git fetch
@@ -264,6 +274,6 @@ _act_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    [[ "$prev" == "act" || "$prev" =~ -[xpevg]+ ]] && mapfile -t COMPREPLY < <(compgen -W "$(_get_projects)" -- "$cur")
+    [[ "$prev" == "act" || "$prev" =~ -[xpevgr]+ ]] && mapfile -t COMPREPLY < <(compgen -W "$(_get_projects)" -- "$cur")
 }
 complete -F _act_completion act
