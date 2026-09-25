@@ -151,7 +151,8 @@ add_starting_point() {
         if ! verifications "$output"; then
             return 1
         fi
-        local start_points; while read -r start_points; do
+        local start_points
+        while read -r start_points; do
             [[ "$start_points" == "$output" ]] && echo "Ponto de partida já cadastrado." >&2 && return 1
         done < "$file_path"
 

@@ -1,6 +1,8 @@
 #!/bin/bash
 
 
+source "./act_utils" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_utils"
+
 actrm() {
     local act_path="$HOME/.act_projects"
     local project_dir=".act"
@@ -27,14 +29,17 @@ actrm() {
     local temp=$(mktemp)
 
     if [[ ! -d "$project_dir" ]]; then
-        echo "Projeto $repo não encontrado." >&2
-        return 1
+        repo=$(_act_recursive_search "$repo" "$cwd") || return 1
+        act "$repo"
+        rm -rf "$project_dir"
+        cd "$cwd"
     else
         rm -rf "$project_dir"
     fi
 
-    local path; while read -r path; do
-        [[ "${path%%:*}" == "$cwd" ]] && continue
+    local path
+    while read -r path; do
+        [[ "${path##*/}" == "$repo" ]] && continue
         echo "$path" >> "$temp"
     done < "$act_path"
 
