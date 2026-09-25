@@ -1,4 +1,5 @@
 local run = require("scripts.run")
+local window_mode = false
 
 vim.g.mapleader = " "
 
@@ -53,19 +54,6 @@ vim.keymap.set("n", "<leader>tn", ":tabnew<CR>")
 vim.keymap.set("n", "<C-I>", ":tabnext<CR>")
 -- vim.keymap.set("n", "<leader>tc", ":tabclose<CR>")
 
-vim.keymap.set("n", "<leader>7", function()
-  vim.cmd("vertical resize -6")
-end)
-vim.keymap.set("n", "<leader>8", function()
-  vim.cmd("vertical resize +6")
-end)
-vim.keymap.set("n", "<leader>9", function()
-  vim.cmd("horizontal resize -6")
-end)
-vim.keymap.set("n", "<leader>0", function()
-  vim.cmd("horizontal resize +6")
-end)
-
 vim.keymap.set("n", "<leader>1", "1gt")
 vim.keymap.set("n", "<leader>2", "2gt")
 vim.keymap.set("n", "<leader>3", "3gt")
@@ -73,8 +61,32 @@ vim.keymap.set("n", "<leader>4", "4gt")
 vim.keymap.set("n", "<leader>5", "5gt")
 vim.keymap.set("n", "<leader>6", "6gt")
 
-vim.keymap.set("n", "<leader>nn", "<C-w>w")
-vim.keymap.set("n", "<leader>nh", "<C-w><Left>")
-vim.keymap.set("n", "<leader>nl", "<C-w><Right>")
-vim.keymap.set("n", "<leader>nk", "<C-w><Up>")
-vim.keymap.set("n", "<leader>nj", "<C-w><Down>")
+vim.keymap.set("n", "<leader>W", function()
+    window_mode = not window_mode
+    if window_mode then
+        vim.notify("WINDOW MODE")
+    else
+        vim.notify("NORMAL MODE")
+    end
+end)
+
+local window_keys = {
+    a = "<C-w>h",
+    x = "<C-w>j",
+    w = "<C-w>k",
+    d = "<C-w>l",
+    A = "<C-w><",
+    D = "<C-w>>",
+    W = "<C-w>+",
+    X = "<C-w>-",
+}
+
+for key, command in pairs(window_keys) do
+    vim.keymap.set("n", key, function()
+        if window_mode then
+            return command
+        end
+
+        return key
+    end, { expr = true })
+end
