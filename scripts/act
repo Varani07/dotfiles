@@ -257,8 +257,12 @@ act() {
         [[ "$project_path" == true ]] && return 0
 
         if [[ "$git_status" == true ]]; then
+            echo
             git fetch
+            git branch -a
+            echo
             git status
+            echo
         fi
 
         env_menu "$repo" "$specific_env" "$curr_repo"
