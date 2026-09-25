@@ -2,9 +2,10 @@
 
 
 source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp"
+source "./act_utils" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_utils"
 
 actls() {
-    local file="$HOME/.act"
+    local file="$HOME/.act_projects"
     local repo=""
     local current_dir=false
     local cwd="$(pwd)"
@@ -20,7 +21,7 @@ actls() {
         bcat+=("cat" "-n")
     fi
 
-    while getopts ":r:hc" opt; do
+    local opt; while getopts ":r:hc" opt; do
         case $opt in
             r) repo="$OPTARG" ;;
             c) current_dir=true ;;
@@ -41,14 +42,16 @@ actls() {
     done
 
     [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
-    [[ ! -d "$file" ]] && echo "Adicione um projeto com actadd primeiro." >&2 && return 1
+    [[ ! -f "$file" ]] && echo "Adicione um projeto com actadd primeiro." >&2 && return 1
     [[ "$current_dir" == true ]] && repo="${cwd##*/}"
 
     if [[ -n "$repo" ]]; then
-        [[ ! -d "${file}/projects/${repo}" ]] && echo "Repo $repo não cadastrado." >&2 && return 1
-        "${bcat[@]}" "${file}/projects/${repo}"/*
+        repo=$(_act_recursive_search "$repo" "$cwd") || return 1
+        act "$repo"
+        "${bcat[@]}" ".act"/*
+        cd "$cwd"
     else
-        "${bcat[@]}" "${file}/act_projects"
+        "${bcat[@]}" "$file"
     fi
 }
 

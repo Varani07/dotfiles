@@ -50,6 +50,7 @@ vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float)
 
 vim.keymap.set("n", "<leader>tn", ":tabnew<CR>")
+vim.keymap.set("n", "<C-I>", ":tabnext<CR>")
 -- vim.keymap.set("n", "<leader>tc", ":tabclose<CR>")
 
 vim.keymap.set("n", "<leader>7", function()

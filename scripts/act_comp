@@ -15,10 +15,10 @@ _get_linguagens() {
 }
 
 _get_projects() {
-    local files_path="$HOME/.act/projects"
-    [[ -d "$files_path" ]] || return 1 
+    local files_path="$HOME/.act_projects"
+    [[ -f "$files_path" ]] || return 1 
 
-    for repo in "$files_path"/*; do
-        echo "${repo##*/}"
-    done
+    local lines; while read -r lines; do
+        echo "${lines##*/}"
+    done < "$files_path"
 }
