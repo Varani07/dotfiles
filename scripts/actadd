@@ -2,6 +2,7 @@
 
 
 source "./act_comp" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_comp"
+source "./act_utils" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_utils"
 
 remove_last_slash() {
     local path="$1"
@@ -150,7 +151,6 @@ add_starting_point() {
         if ! verifications "$output"; then
             return 1
         fi
-
         local start_points; while read -r start_points; do
             [[ "$start_points" == "$output" ]] && echo "Ponto de partida já cadastrado." >&2 && return 1
         done < "$file_path"
@@ -163,8 +163,10 @@ actadd() {
     local OPTIND
     local dir_path=".act"
     local file_path="${HOME}/.act_projects"
+
     local path=""
     path="$(pwd)"
+    local prev_path="$path"
     repo="${path##*/}"
 
     local linguagem="none"
@@ -218,31 +220,51 @@ actadd() {
     shift $((OPTIND - 1))
 
     if [[ -d ".act" ]]; then
-        [[ "$1" == "init" ]] && echo "Projeto já foi inicializado." >&2 && return 1
-        [[ "$1" == "sync" ]] && echo "$path" >> "$file_path" && echo "Projeto registrado." && return
+        local found=false
+        local line=""
+        while read -r line; do
+            [[ "$path" == "$line" ]] && found=true && break
+        done < "$file_path"
+        if [[ "$found" == true ]]; then
+            [[ "$1" == "init" ]] && echo "Projeto já foi inicializado." >&2 && return 1
+        else
+            if [[ "$1" == "sync" ]]; then
+                echo "$path" >> "$file_path" && echo "Projeto registrado." && return
+            else
+                echo "Sincronize o projeto com \"actadd sync\"" >&2 && return 1 
+            fi
+        fi
     else
-        [[ "$1" != "init" ]] && echo "Primeiro registre o projeto com init." >&2 && return 1
-        mkdir ".act"
+        if [[ "$1" == "init" ]]; then
+            mkdir ".act"
+        else
+            repo=$(_act_recursive_search "$repo" "$path") || return 1
+            act "$repo"
+            path="$(pwd)"
+        fi
     fi
 
     reload_file_f "$reload_file" "$dir_path" "$repo"
 
-    local line; while read -r line; do
+    local line
+    while read -r line; do
         project="${line%%:*}"
         if [[ "$path" == "$project" ]]; then
-            add_starting_point "$linguagem" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"
+            add_starting_point "$linguagem" "$start_path" "$from_path" "$prev_path" "$repo" "$dir_path" "$no_starting_point"
             add_env "$linguagem" "$repo" "$no_env"
+            cd "$prev_path"
             return 1
         fi
     done < "$file_path"
     
-    if ! add_starting_point "$linguagem" "$start_path" "$from_path" "$path" "$repo" "$dir_path" "$no_starting_point"; then
+    if ! add_starting_point "$linguagem" "$start_path" "$from_path" "$prev_path" "$repo" "$dir_path" "$no_starting_point"; then
         return 1
     fi
     add_env "$linguagem" "$repo" "$no_env"
 
     echo "$path" >> "$file_path"
     [[ "$1" == "init" ]] && echo "Projeto registrado."
+    cd "$prev_path"
 }
 
 _actadd_completion() {
