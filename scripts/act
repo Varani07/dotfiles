@@ -77,9 +77,15 @@ env_menu() {
 
     local lines; mapfile -t lines < "$repo_config"
     if [[ "$menu" == true ]]; then
+        if [[ "${#lines[@]}" == 1 ]]; then
+            echo "Só uma opção de ambiente disponível..."
+            env_handling "${lines[$index]}" "$path" 
+            return 0
+        fi
         index=$(($(menu_f "$repo_config" bcat "$run" lines))) || return 1
     fi
     env_handling "${lines[$index]}" "$path" 
+    return 0
 }
 
 language_handling() {
@@ -173,9 +179,16 @@ starting_point_menu() {
     local lines; mapfile -t lines < "$repo_config"
     [[ ((${#lines[@]} == 0)) && "$run" == true ]] && echo "Nenhum ponto de partida cadastrado para este projeto." >&2 && return 1
     if [[ "$menu" == true ]]; then
+        ((${#lines[@]} == 0)) && echo "Nenhum ponto de partida cadastrado..." >&2 && return 0
+        if [[ "${#lines[@]}" == 1 ]]; then
+            echo "Apenas uma opção de ponto de início disponivel..."
+            language_handling "${lines[$index]}" "$run" "$path" "$vim"
+            return 0
+        fi
         index=$(($(menu_f "$repo_config" bcat "$run" lines))) || return 1
     fi
     language_handling "${lines[$index]}" "$run" "$path" "$vim"
+    return 0
 }
 
 act() {
@@ -212,7 +225,7 @@ act() {
                 msg+=("x - Inicia o projeto a partir da primeira config presente no arquivo act.")
                 msg+=("p - Menu para escolher como rodar o projeto.")
                 msg+=("e - Menu para escolher ambiente.")
-                msg+=("r - Apenas vai´para o diretório do projeto.")
+                msg+=("r - Apenas vai para o diretório do projeto.")
                 printf "\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
                 return 1
                 ;;

@@ -1,0 +1,104 @@
+#!/bin/bash
+
+
+source "./act_utils" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_utils"
+
+menu_opt() {
+    local file_path="$1"
+    local first_opt="$2"
+    local prompt
+    [[ -z "$first_opt" ]] && prompt="primeira" || prompt="segunda"
+    local lines answer
+    local bcat=()
+    mapfile -t lines < "$file_path"
+    (( "${#lines[@]}" < 2 )) && echo "Apenas uma escolha disponivel" >&2 && return 1
+
+    if bat --version 2>/dev/null >&2; then
+        bcat+=("bat")
+    else
+        bcat+=("cat" "-n")
+    fi
+
+    while true; do
+        "${bcat[@]}" "$file_path" >&2
+        read -r -p "Escolha a ${prompt} opção ou q para sair: " answer
+
+        [[ "$answer" == "q" ]] && return 1
+        [[ -n "$answer" && "$answer" == "$first_opt" ]] && echo "Escolha deve ser diferente da primeira." >&2 && continue
+
+        if [[ ! $answer =~ ^-?[0-9]+$ ]]; then
+            echo "Valor fornecido nao e um numero." >&2
+            continue
+        fi
+
+        if (("${answer}" > "${#lines[@]}" || "${answer}" < 1)); then
+            echo "Escolha invalida." >&2
+            continue
+        fi
+
+        printf "%d\n" "$answer" && return 0
+    done
+}
+
+actch() {
+    local prev_dir curr_dir
+    prev_dir="$(pwd)"
+    curr_dir="$prev_dir"
+
+    local repo="${curr_dir##*/}"
+    repo="$(_act_recursive_search "${repo}" "${curr_dir}")" || return 1
+    act -r "$repo"
+
+    # local OPTIND opt
+    # while getopts ":es" opt; do
+    # done
+
+    local op_type first_op second_op file_name
+    op_type="$1"
+    
+    [[ "$op_type" != "env" && "$op_type" != "starting_point" ]] && echo "Argumento não reconhecido" >&2 && cd "$prev_dir" && return 1
+    file_name=".act/${op_type}"
+    if ! first_op="$(menu_opt "$file_name" "$first_op")"; then
+        cd "$prev_dir" && return 1
+    fi
+    if ! second_op="$(menu_opt "$file_name" "$first_op")"; then
+        cd "$prev_dir" && return 1
+    fi
+
+    local temp=$(mktemp)
+    local line inner_line
+    local spare_value
+    local counter=$((0))
+    local inner_counter=$((0))
+    local min=$((first_op < second_op ? first_op : second_op))
+    local max=$((first_op > second_op ? first_op : second_op))
+    while read -r line; do
+        counter=$((counter + 1))
+        if [[ "$counter" == "$min" ]]; then
+            spare_value="$line"
+            while read -r inner_line; do
+                inner_counter=$((inner_counter + 1))
+                if [[ "$inner_counter" == "$max" ]]; then
+                    echo "$inner_line" >> "$temp"
+                    break
+                fi
+            done < "$file_name"
+        elif [[ "$counter" == "$max" ]]; then
+            echo "$spare_value" >> "$temp"
+        else
+            echo "$line" >> "$temp"
+        fi
+    done < "$file_name"
+    mv "$temp" "$file_name"
+    cd "$prev_dir"
+    return 0
+}
+
+_actch_completion() {
+    local cur prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    mapfile -t COMPREPLY < <(compgen -W "$(printf "%s\n" "env" "starting_point")" -- "$cur")
+}
+complete -F _actch_completion actch
