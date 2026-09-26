@@ -41,13 +41,15 @@ actls() {
         esac
     done
 
+    shift $((OPTIND - 1))
+
     [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
     [[ ! -f "$file" ]] && echo "Adicione um projeto com actadd primeiro." >&2 && return 1
     [[ "$current_dir" == true ]] && repo="${cwd##*/}"
 
     if [[ -n "$repo" ]]; then
         repo=$(_act_recursive_search "$repo" "$cwd") || return 1
-        act "$repo"
+        act -r "$repo"
         "${bcat[@]}" ".act"/*
         cd "$cwd"
     else

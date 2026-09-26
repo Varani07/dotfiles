@@ -1,0 +1,164 @@
+#!/bin/bash
+
+
+source "./act_utils" 2>/dev/null || source "$HOME/repos/dotfiles/scripts/act_utils"
+
+menu_opt() {
+    local file_path="$1"
+    local first_opt="$2"
+    local one_opt="$3"
+    local delete="$4"
+
+    local prompt prompt_slice
+    [[ -z "$first_opt" ]] && prompt_slice="primeira" || prompt_slice="segunda"
+    [[ "$one_opt" == false ]] && prompt="Escolha a ${prompt_slice} opção ou q para sair: " || prompt="Escolha uma opção ou q para sair: "
+
+    local lines answer
+    local bcat=()
+    mapfile -t lines < "$file_path"
+
+    [[ "${#lines[@]}" == 0 ]] && echo "Arquivo vazio" >&2 && return 1
+
+    if (( "${#lines[@]}" < 2 )); then
+        if [[ "$delete" == false || "$file_path" == ".act/env" ]]; then
+            echo "Apenas uma escolha disponivel" >&2 && return 1
+        fi
+    fi
+
+    if bat --version 2>/dev/null >&2; then
+        bcat+=("bat")
+    else
+        bcat+=("cat" "-n")
+    fi
+
+    while true; do
+        "${bcat[@]}" "$file_path" >&2
+        read -r -p "$prompt" answer
+
+        [[ "$answer" == "q" ]] && return 1
+        if [[ -n "$answer" && "$answer" == "$first_opt" ]]; then
+            if [[ "$one_opt" ]]; then
+                echo "Opção inválida." >&2
+            else
+                echo "Escolha deve ser diferente da primeira." >&2 
+            fi
+            continue
+        fi
+
+        if [[ ! $answer =~ ^-?[0-9]+$ ]]; then
+            echo "Valor fornecido nao e um numero." >&2
+            continue
+        fi
+
+        if (("${answer}" > "${#lines[@]}" || "${answer}" < 1)); then
+            echo "Escolha invalida." >&2
+            continue
+        fi
+
+        printf "%d\n" "$answer" && return 0
+    done
+}
+
+change_pos() {
+    local first_op="$1" second_op="$2" file_name="$3"
+    local delete="$4"
+
+    local temp=$(mktemp)
+    local counter=$((0)) line 
+
+    if [[ "$delete" == true ]]; then
+        while read -r line; do
+            counter=$((counter + 1))
+            [[ "$counter" == "$first_op" ]] && continue
+            echo "$line" >> "$temp"
+        done < "$file_name"
+    else
+        local inner_counter=$((0)) inner_line
+        local spare_value
+        local min=$((first_op < second_op ? first_op : second_op))
+        local max=$((first_op > second_op ? first_op : second_op))
+
+        while read -r line; do
+            counter=$((counter + 1))
+            if [[ "$counter" == "$min" ]]; then
+                spare_value="$line"
+                while read -r inner_line; do
+                    inner_counter=$((inner_counter + 1))
+                    if [[ "$inner_counter" == "$max" ]]; then
+                        echo "$inner_line" >> "$temp"
+                        break
+                    fi
+                done < "$file_name"
+            elif [[ "$counter" == "$max" ]]; then
+                echo "$spare_value" >> "$temp"
+            else
+                echo "$line" >> "$temp"
+            fi
+        done < "$file_name"
+    fi
+
+    mv "$temp" "$file_name"
+    return 0
+}
+
+actch() {
+    local prev_dir curr_dir
+    prev_dir="$(pwd)"
+    curr_dir="$prev_dir"
+
+    local repo="${curr_dir##*/}"
+    repo="$(_act_recursive_search "${repo}" "${curr_dir}")" || return 1
+    act -r "$repo"
+
+    local OPTIND opt
+    local first=false delete=false
+    while getopts ":fd" opt; do
+        case "$opt" in
+            f) first=true ;;
+            d) delete=true ;;
+            \?) "Flag -${OPTARG} desconhecida." >&2 && return 1 ;;
+        esac
+    done
+
+    shift $((OPTIND - 1))
+
+    local op_type first_op second_op file_name
+    op_type="$1"
+    
+    [[ "$op_type" != "env" && "$op_type" != "starting_point" ]] && echo "Argumento não reconhecido" >&2 && cd "$prev_dir" && return 1
+    file_name=".act/${op_type}"
+
+    local one_opt=false
+
+    if [[ "$first" == true ]]; then
+        one_opt=true
+        first_op="1"
+        if ! second_op="$(menu_opt "$file_name" "$first_op" "$one_opt" "$delete")"; then
+            cd "$prev_dir" && return 1
+        fi
+    elif [[ "$delete" == true ]]; then
+        if ! first_op="$(menu_opt "$file_name" "$first_op" "$one_opt" "$delete")"; then
+            cd "$prev_dir" && return 1
+        fi
+    else
+        if ! first_op="$(menu_opt "$file_name" "$first_op" "$one_opt" "$delete")"; then
+            cd "$prev_dir" && return 1
+        fi
+        if ! second_op="$(menu_opt "$file_name" "$first_op" "$one_opt" "$delete")"; then
+            cd "$prev_dir" && return 1
+        fi
+    fi
+
+    change_pos "$first_op" "$second_op" "$file_name" "$delete"
+    cd "$prev_dir" || return 1
+    return 0
+}
+
+_actch_completion() {
+    local cur # prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    # prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    mapfile -t COMPREPLY < <(compgen -W "$(printf "%s\n" "env" "starting_point")" -- "$cur")
+}
+complete -F _actch_completion actch
