@@ -41,6 +41,8 @@ actls() {
         esac
     done
 
+    shift $((OPTIND - 1))
+
     [[ -n "$erro" ]] && echo "$erro" >&2 && return 1
     [[ ! -f "$file" ]] && echo "Adicione um projeto com actadd primeiro." >&2 && return 1
     [[ "$current_dir" == true ]] && repo="${cwd##*/}"

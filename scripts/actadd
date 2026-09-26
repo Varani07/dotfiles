@@ -69,6 +69,8 @@ add_env() {
 
     [[ "$found" == false && "$no_env" == false ]] && echo "$lang" >> "$file_path"
     [[ "$found" == true && "$no_env" == false ]] && echo "Ambiente já cadastrado." >&2 && return 1
+
+    return 0
 }
 
 verifications() {
@@ -255,7 +257,7 @@ actadd() {
                     cd "$prev_path" && return 1
                 fi
             fi
-            cd "$prev_path"
+            cd "$prev_path" || return 1
             return 1
         fi
     done < "$file_path"
@@ -273,7 +275,7 @@ actadd() {
 
     echo "$path" >> "$file_path"
     [[ "$1" == "init" ]] && echo "Projeto registrado."
-    cd "$prev_path"
+    cd "$prev_path" || return 1
 }
 
 _actadd_completion() {
