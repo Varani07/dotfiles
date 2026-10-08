@@ -112,10 +112,21 @@ actch() {
 
     local OPTIND opt
     local first=false delete=false
-    while getopts ":fd" opt; do
+    while getopts ":fdh" opt; do
         case "$opt" in
             f) first=true ;;
             d) delete=true ;;
+            h)
+                msg=()
+                msg+=("actch starting_point")
+                msg+=("actch -d env")
+                msg+=("actch -f starting_point")
+                msg+=("Flags:")
+                msg+=("f - Favoritar opção.")
+                msg+=("d - Deletar env/starting_point.")
+                printf "\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n\n" "${msg[@]}"
+                return 1
+                ;;
             \?) "Flag -${OPTARG} desconhecida." >&2 && return 1 ;;
         esac
     done
