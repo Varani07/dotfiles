@@ -233,7 +233,8 @@ actadd() {
     else
         if [[ "$1" == "init" ]]; then
             mkdir ".act"
-            touch .act/{starting_point,env}
+            touch .act/{starting_point,env,config}
+            echo "home:${HOME}" > ".act/config"
         else
             repo=$(_act_recursive_search "$repo" "$path") || return 1
             act -r "$repo"
