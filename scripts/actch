@@ -101,6 +101,46 @@ change_pos() {
     return 0
 }
 
+update_home() {
+    local line config_line
+    local temp=$(mktemp)
+    local config_temp=$(mktemp)
+    local file_path=".act/starting_point"
+    local config_path=".act/config"
+    local current_home
+    local new_home="$HOME"
+
+    while read -r config_line; do
+        local opt="${config_line%%:*}"
+        case "$opt" in
+            home) 
+                current_home="${config_line##*:}" 
+                echo "home:${new_home}" >> "$config_temp"
+                ;;
+            *) echo "$config_line" >> "$config_temp" ;;
+        esac
+    done < "$config_path"
+
+    mv "$config_temp" "$config_path"
+
+    while read -r line; do
+        local first_path="${line##*:}"
+        line_without_end="${line%:*}"
+        local second_path="${line_without_end##*:}"
+        local old_paths=":${second_path}:${first_path}"
+
+        first_path="${first_path/$current_home/$new_home}"
+        second_path="${second_path/$current_home/$new_home}"
+        local new_paths=":${second_path}:${first_path}"
+
+        line="${line%$old_paths}"
+        line+="$new_paths"
+        echo "$line" >> "$temp"
+    done < "$file_path"
+
+    mv "$temp" "$file_path"
+}
+
 actch() {
     local prev_dir curr_dir
     prev_dir="$(pwd)"
@@ -112,19 +152,22 @@ actch() {
 
     local OPTIND opt
     local first=false delete=false
-    while getopts ":fdh" opt; do
+    while getopts ":fdhc" opt; do
         case "$opt" in
             f) first=true ;;
             d) delete=true ;;
+            c) update_home && cd "$prev_dir" && return 0 ;;
             h)
                 msg=()
                 msg+=("actch starting_point")
                 msg+=("actch -d env")
                 msg+=("actch -f starting_point")
+                msg+=("actch -c")
                 msg+=("Flags:")
                 msg+=("f - Favoritar opção.")
                 msg+=("d - Deletar env/starting_point.")
-                printf "\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n\n" "${msg[@]}"
+                msg+=("c - Atualizar home.")
+                printf "\n%s\n%s\n%s\n%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n" "${msg[@]}"
                 return 1
                 ;;
             \?) "Flag -${OPTARG} desconhecida." >&2 && return 1 ;;
